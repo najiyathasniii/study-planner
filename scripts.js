@@ -344,7 +344,7 @@ async function loadSavedProfile() {
 // 7. BACKEND AUTHENTICATION INTEGRATION
 // ----------------------------------------------------
 
-const API_BASE_URL = 'http://localhost:5000/api';
+const API_BASE_URL = 'https://study-planner-backend-rklh.onrender.com/api';
 const AUTH_TOKEN_KEY = 'studyplanner.token';
 
 function getAuthToken() { return localStorage.getItem(AUTH_TOKEN_KEY); }
