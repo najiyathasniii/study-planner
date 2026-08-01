@@ -3,13 +3,28 @@ let weeklyChartInstance = null;
 let statusChartInstance = null;
 
 // ----------------------------------------------------
-// 1. LOCAL STORAGE LOADERS & INITIAL STATE
+// 1. BACKEND & API CONFIGURATION
 // ----------------------------------------------------
+// Change this to your live Render backend URL:
+const API_BASE_URL = 'https://study-planner-backend.onrender.com/api';
+const AUTH_TOKEN_KEY = 'studyplanner.token';
 
-let tasks = JSON.parse(localStorage.getItem('study_tasks')) || [];
+let tasks = [];
 
-function saveTasksToStorage() {
-    localStorage.setItem('study_tasks', JSON.stringify(tasks));
+function getAuthToken() { return localStorage.getItem(AUTH_TOKEN_KEY); }
+function setAuthToken(token) { localStorage.setItem(AUTH_TOKEN_KEY, token); }
+function clearAuthToken() { 
+    localStorage.removeItem(AUTH_TOKEN_KEY); 
+    localStorage.removeItem('study_useremail');
+    localStorage.removeItem('study_username');
+}
+
+function getAuthHeaders() {
+    const token = getAuthToken();
+    return {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+    };
 }
 
 // ----------------------------------------------------
@@ -40,48 +55,104 @@ function showSection(sectionId, element) {
 }
 
 // ----------------------------------------------------
-// 3. TASK MANAGEMENT WITH PERSISTENCE
+// 3. TASK MANAGEMENT WITH MONGODB SYNC
 // ----------------------------------------------------
-function addNewTask() {
+
+// Fetch all tasks for logged in user from MongoDB
+async function fetchTasksFromBackend() {
+    const token = getAuthToken();
+    if (!token) return;
+
+    try {
+        const res = await fetch(`${API_BASE_URL}/tasks`, {
+            method: 'GET',
+            headers: getAuthHeaders()
+        });
+
+        if (res.status === 401) {
+            logoutUser();
+            return;
+        }
+
+        if (res.ok) {
+            const rawTasks = await res.json();
+            // Map MongoDB format to frontend properties
+            tasks = rawTasks.map(t => ({
+                id: t._id,
+                text: t.title,
+                completed: t.status === 'completed',
+                completedDay: t.completedDay !== undefined ? t.completedDay : (t.status === 'completed' ? new Date(t.updatedAt).getDay() : undefined)
+            }));
+            renderTasks();
+        }
+    } catch (err) {
+        console.error('Error loading tasks from server:', err);
+    }
+}
+
+// Add New Task to MongoDB
+async function addNewTask() {
     const input = document.getElementById('taskInput');
     if (!input || !input.value.trim()) return;
 
-    const newTask = {
-        id: Date.now(),
-        text: input.value.trim(),
-        completed: false,
-        completedDay: undefined
-    };
+    const titleText = input.value.trim();
 
-    tasks.push(newTask);
-    saveTasksToStorage();
-    input.value = '';
-    renderTasks();
-}
+    try {
+        const res = await fetch(`${API_BASE_URL}/tasks`, {
+            method: 'POST',
+            headers: getAuthHeaders(),
+            body: JSON.stringify({
+                title: titleText,
+                status: 'today'
+            })
+        });
 
-function toggleTask(id) {
-    const today = new Date().getDay(); 
-    
-    tasks = tasks.map(t => {
-        if (t.id === id) {
-            const isNowCompleted = !t.completed;
-            return {
-                ...t,
-                completed: isNowCompleted,
-                completedDay: isNowCompleted ? today : undefined
-            };
+        if (res.ok) {
+            input.value = '';
+            fetchTasksFromBackend(); // Reload clean list from MongoDB
         }
-        return t;
-    });
-
-    saveTasksToStorage();
-    renderTasks();
+    } catch (err) {
+        console.error('Error creating task on server:', err);
+    }
 }
 
-function deleteTask(id) {
-    tasks = tasks.filter(t => t.id !== id);
-    saveTasksToStorage();
-    renderTasks();
+// Toggle Task Complete / Pending on MongoDB
+async function toggleTask(id) {
+    const taskToToggle = tasks.find(t => t.id === id);
+    if (!taskToToggle) return;
+
+    const newCompletedStatus = !taskToToggle.completed;
+    const newStatusString = newCompletedStatus ? 'completed' : 'today';
+
+    try {
+        const res = await fetch(`${API_BASE_URL}/tasks/${id}`, {
+            method: 'PUT',
+            headers: getAuthHeaders(),
+            body: JSON.stringify({ status: newStatusString })
+        });
+
+        if (res.ok) {
+            fetchTasksFromBackend();
+        }
+    } catch (err) {
+        console.error('Error updating task on server:', err);
+    }
+}
+
+// Delete Task from MongoDB
+async function deleteTask(id) {
+    try {
+        const res = await fetch(`${API_BASE_URL}/tasks/${id}`, {
+            method: 'DELETE',
+            headers: getAuthHeaders()
+        });
+
+        if (res.ok) {
+            fetchTasksFromBackend();
+        }
+    } catch (err) {
+        console.error('Error deleting task on server:', err);
+    }
 }
 
 function renderTasks() {
@@ -95,11 +166,11 @@ function renderTasks() {
         div.className = `task-item ${task.completed ? 'completed' : ''}`;
         div.innerHTML = `
             <div style="display:flex; align-items:center; gap:10px;">
-                <input type="checkbox" ${task.completed ? 'checked' : ''} onchange="toggleTask(${task.id})">
+                <input type="checkbox" ${task.completed ? 'checked' : ''} onchange="toggleTask('${task.id}')">
                 <span>${task.text}</span>
             </div>
             <div class="task-actions">
-                <button class="btn-icon btn-delete" onclick="deleteTask(${task.id})"><i class="fa-solid fa-trash"></i></button>
+                <button class="btn-icon btn-delete" onclick="deleteTask('${task.id}')"><i class="fa-solid fa-trash"></i></button>
             </div>
         `;
         taskList.appendChild(div);
@@ -233,9 +304,8 @@ function initCalendar() {
 }
 
 // ----------------------------------------------------
-// 6. PROFILE & SETTINGS (AUTO FETCH & POPULATE)
+// 6. PROFILE & SETTINGS
 // ----------------------------------------------------
-
 function previewImage(event) {
     const reader = new FileReader();
     reader.onload = function() {
@@ -293,7 +363,6 @@ async function loadSavedProfile() {
     const savedImg = localStorage.getItem('study_profile_img');
     const token = getAuthToken();
 
-    // FALLBACK: If email is missing in storage, fetch live user details from backend server
     if (!savedEmail && token) {
         try {
             let res = await fetch(`${API_BASE_URL}/auth/me`, {
@@ -314,7 +383,7 @@ async function loadSavedProfile() {
                 if (savedName) localStorage.setItem('study_username', savedName);
             }
         } catch (err) {
-            console.log('Could not fetch user profile from backend server:', err);
+            console.log('Could not fetch user profile from server:', err);
         }
     }
 
@@ -343,140 +412,122 @@ async function loadSavedProfile() {
 // ----------------------------------------------------
 // 7. BACKEND AUTHENTICATION INTEGRATION
 // ----------------------------------------------------
-
-const API_BASE_URL = 'https://study-planner-backend-rklh.onrender.com/api';
-const AUTH_TOKEN_KEY = 'studyplanner.token';
-
-function getAuthToken() { return localStorage.getItem(AUTH_TOKEN_KEY); }
-function setAuthToken(token) { localStorage.setItem(AUTH_TOKEN_KEY, token); }
-function clearAuthToken() { 
-    localStorage.removeItem(AUTH_TOKEN_KEY); 
-    localStorage.removeItem('study_useremail');
-    localStorage.removeItem('study_username');
-}
-
 async function registerUser(name, email, password) {
-  let response = await fetch(`${API_BASE_URL}/auth/register`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ name, email, password })
-  });
-
-  if (response.status === 404) {
-    response = await fetch(`${API_BASE_URL}/register`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, email, password })
+    let response = await fetch(`${API_BASE_URL}/register`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, email, password })
     });
-  }
 
-  const contentType = response.headers.get('content-type');
-  if (!contentType || !contentType.includes('application/json')) {
-    throw new Error('Backend route not found (404). Check Server.js!');
-  }
+    const contentType = response.headers.get('content-type');
+    if (!contentType || !contentType.includes('application/json')) {
+        throw new Error('Backend route not found. Check server!');
+    }
 
-  const data = await response.json();
-  if (!response.ok) throw new Error(data.message || 'Registration failed.');
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.message || 'Registration failed.');
 
-  setAuthToken(data.token);
-  return data.user;
+    setAuthToken(data.token);
+    return data.user;
 }
 
 async function loginUser(email, password) {
-  let response = await fetch(`${API_BASE_URL}/auth/login`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email, password })
-  });
-
-  if (response.status === 404) {
-    response = await fetch(`${API_BASE_URL}/login`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password })
+    let response = await fetch(`${API_BASE_URL}/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password })
     });
-  }
 
-  const contentType = response.headers.get('content-type');
-  if (!contentType || !contentType.includes('application/json')) {
-    throw new Error('Backend route not found (404). Check Server.js!');
-  }
+    const contentType = response.headers.get('content-type');
+    if (!contentType || !contentType.includes('application/json')) {
+        throw new Error('Backend route not found. Check server!');
+    }
 
-  const data = await response.json();
-  if (!response.ok) throw new Error(data.message || 'Login failed.');
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.message || 'Login failed.');
 
-  setAuthToken(data.token);
-  return data.user;
+    setAuthToken(data.token);
+    return data.user;
 }
 
 function logoutUser() {
-  clearAuthToken();
-  window.location.href = 'login.html';
+    clearAuthToken();
+    window.location.href = 'login.html';
 }
 
 function initAuthForms() {
-  const loginForm = document.getElementById('loginForm');
-  const registerForm = document.getElementById('registerForm');
+    const loginForm = document.getElementById('loginForm');
+    const registerForm = document.getElementById('registerForm');
 
-  // 1. LOGIN HANDLER
-  if (loginForm) {
-    loginForm.addEventListener('submit', async (event) => {
-      event.preventDefault();
-      try {
-        const emailInput = loginForm.querySelector('input[type="email"]');
-        const passwordInput = loginForm.querySelector('input[type="password"]');
+    if (loginForm) {
+        loginForm.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            try {
+                const emailInput = loginForm.querySelector('input[type="email"]');
+                const passwordInput = loginForm.querySelector('input[type="password"]');
 
-        if (!emailInput || !passwordInput) throw new Error('Input fields not found.');
+                if (!emailInput || !passwordInput) throw new Error('Input fields not found.');
 
-        const typedEmail = emailInput.value.trim();
-        const user = await loginUser(typedEmail, passwordInput.value);
+                const typedEmail = emailInput.value.trim();
+                const user = await loginUser(typedEmail, passwordInput.value);
 
-        const finalEmail = (user && user.email) ? user.email : typedEmail;
-        const finalName = (user && user.name) ? user.name : 'User';
+                const finalEmail = (user && user.email) ? user.email : typedEmail;
+                const finalName = (user && user.name) ? user.name : 'User';
 
-        localStorage.setItem('study_useremail', finalEmail);
-        localStorage.setItem('study_username', finalName);
+                localStorage.setItem('study_useremail', finalEmail);
+                localStorage.setItem('study_username', finalName);
 
-        window.location.href = 'dashboard.html'; 
-      } catch (err) {
-        alert(err.message || 'Login failed!');
-      }
-    });
-  }
+                window.location.href = 'dashboard.html'; 
+            } catch (err) {
+                alert(err.message || 'Login failed!');
+            }
+        });
+    }
 
-  // 2. REGISTER HANDLER
-  if (registerForm) {
-    registerForm.addEventListener('submit', async (event) => {
-      event.preventDefault();
-      try {
-        const textInputs = registerForm.querySelectorAll('input[type="text"]');
-        const emailInput = registerForm.querySelector('input[type="email"]');
-        const passwordInput = registerForm.querySelector('input[type="password"]');
+    if (registerForm) {
+        registerForm.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            try {
+                const textInputs = registerForm.querySelectorAll('input[type="text"]');
+                const emailInput = registerForm.querySelector('input[type="email"]');
+                const passwordInput = registerForm.querySelector('input[type="password"]');
 
-        const name = textInputs.length > 0 ? textInputs[0].value.trim() : 'User';
-        const email = emailInput ? emailInput.value.trim() : '';
-        const password = passwordInput ? passwordInput.value : '';
+                const name = textInputs.length > 0 ? textInputs[0].value.trim() : 'User';
+                const email = emailInput ? emailInput.value.trim() : '';
+                const password = passwordInput ? passwordInput.value : '';
 
-        if (!email || !password) throw new Error('Please fill out all required fields.');
+                if (!email || !password) throw new Error('Please fill out required fields.');
 
-        const user = await registerUser(name, email, password);
+                const user = await registerUser(name, email, password);
 
-        localStorage.setItem('study_username', name);
-        localStorage.setItem('study_useremail', email);
+                localStorage.setItem('study_username', name);
+                localStorage.setItem('study_useremail', email);
 
-        window.location.href = 'dashboard.html';
-      } catch (err) {
-        alert(err.message || 'Registration failed!');
-      }
-    });
-  }
+                window.location.href = 'dashboard.html';
+            } catch (err) {
+                alert(err.message || 'Registration failed!');
+            }
+        });
+    }
 }
 
 // ----------------------------------------------------
 // 8. INITIALIZE ON PAGE LOAD
 // ----------------------------------------------------
 document.addEventListener('DOMContentLoaded', () => {
-    renderTasks();
+    // Check auth token before fetching
+    const token = getAuthToken();
+    const isAuthPage = window.location.pathname.includes('login.html') || window.location.pathname.includes('register.html');
+
+    if (!token && !isAuthPage) {
+        window.location.href = 'login.html';
+        return;
+    }
+
+    if (token) {
+        fetchTasksFromBackend();
+    }
+    
     loadSavedProfile();
     initAuthForms();
 });
