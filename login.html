@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login | Study Planner</title>
+
+    <!-- Make sure your CSS filename matches here (style.css or styless.css) -->
+    <link rel="stylesheet" href="styless.css">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+</head>
+
+<body>
+
+<div class="auth-container">
+    <div class="auth-card">
+
+        <div class="logo">
+            <i class="fa-solid fa-book-open"></i>
+            <h1>Study Planner</h1>
+            <p>Welcome Back!</p>
+        </div>
+
+        <form id="loginForm">
+            <div class="input-group">
+                <label>Email</label>
+                <input type="email" id="loginEmail" placeholder="Enter your email" required>
+            </div>
+
+            <div class="input-group">
+                <label>Password</label>
+                <input type="password" id="loginPassword" placeholder="Enter your password" required>
+            </div>
+
+            <div class="options">
+                <label><input type="checkbox"> Remember Me</label>
+                <a href="#">Forgot Password?</a>
+            </div>
+
+            <button type="submit" class="btn">Login</button>
+        </form>
+
+        <div class="bottom-text">
+            Don't have an account? <a href="register.html">Register</a>
+        </div>
+
+        <div class="home-link">
+            <a href="index.html">← Back to Home</a>
+        </div>
+
+    </div>
+</div>
+
+<script src="scripts.js"></script>
+
+</body>
+</html>

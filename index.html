@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>StudyFlow — Plan your study time like it matters</title>
+  <meta name="description" content="StudyFlow is a study planner that turns your deadlines into a clear, doable daily plan." />
+
+  <!-- Google Fonts -->
+ <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap">
+
+  <!-- Main Stylesheet -->
+  <link rel="stylesheet" href="styless.css">
+</head>
+<body>
+
+  <!-- ======================= HEADER / NAV ======================= -->
+  <header class="site-header">
+    <div class="container header-inner">
+
+      <a href="index.html" class="logo">
+        <span class="logo-mark" aria-hidden="true">
+          <svg viewBox="0 0 40 40" width="28" height="28">
+            <circle cx="20" cy="20" r="17" fill="none" stroke="url(#logoGradient)" stroke-width="4" />
+            <path d="M12 21l5 5 11-13" fill="none" stroke="url(#logoGradient)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" />
+            <defs>
+              <linearGradient id="logoGradient" x1="0" y1="0" x2="40" y2="40">
+                <stop offset="0" stop-color="#3E7BFA" />
+                <stop offset="1" stop-color="#7FD8E8" />
+              </linearGradient>
+            </defs>
+          </svg>
+        </span>
+        <span class="logo-text">StudyFlow</span>
+      </a>
+
+      <!-- Mobile nav toggle -->
+      <button class="nav-toggle" id="navToggle" aria-label="Open menu" aria-expanded="false" aria-controls="primaryNav">
+        <span></span><span></span><span></span>
+      </button>
+
+      <nav class="primary-nav" id="primaryNav" aria-label="Primary">
+        <ul>
+          <li><a href="#features">Features</a></li>
+          <li><a href="#how-it-works">How it works</a></li>
+          <li><a href="dashboard.html">Dashboard demo</a></li>
+        </ul>
+      </nav>
+
+      <div class="header-actions">
+        <a href="login.html" class="btn btn-ghost">Log in</a>
+        <a href="register.html" class="btn btn-primary">Get started</a>
+      </div>
+
+    </div>
+  </header>
+
+  <main>
+
+    <!-- ======================= HERO ======================= -->
+    <section class="hero">
+      <div class="container hero-inner">
+
+        <div class="hero-copy">
+          <p class="eyebrow">Built for students who are done with sticky notes</p>
+          <h1>Plan your study time <span class="highlight">like it matters.</span></h1>
+          <p class="hero-sub">
+            Drop in your deadlines and StudyFlow blocks out real, doable study sessions around them —
+            so every day starts with a clear answer to "what should I study right now?"
+          </p>
+
+          <div class="hero-cta">
+            <a href="register.html" class="btn btn-primary btn-lg">Create your plan</a>
+            <a href="dashboard.html" class="btn btn-outline btn-lg">See the dashboard</a>
+          </div>
+
+          <div class="hero-trust">
+            <span class="hero-trust-item"><strong>4</strong> task states, always visible</span>
+            <span class="hero-trust-divider" aria-hidden="true">•</span>
+            <span class="hero-trust-item"><strong>1</strong> ring to track it all</span>
+          </div>
+        </div>
+
+        <div class="hero-visual" aria-hidden="true">
+          <div class="glass-card preview-card">
+
+            <div class="preview-header">
+              <span class="preview-title">Today</span>
+              <span class="preview-date">Mon, Jul 27</span>
+            </div>
+
+            <div class="preview-body">
+
+              <!-- SVG Progress Ring -->
+              <div class="mini-ring">
+                <svg viewBox="0 0 120 120">
+                  <circle class="ring-track" cx="60" cy="60" r="52" />
+                  <circle class="ring-fill" cx="60" cy="60" r="52" />
+                </svg>
+                <div class="mini-ring-label">
+                  <span class="mini-ring-value">62%</span>
+                  <span class="mini-ring-caption">today</span>
+                </div>
+              </div>
+
+              <ul class="preview-tasks">
+                <li class="preview-task is-done">
+                  <span class="task-check" aria-hidden="true">✓</span>
+                  Review Chapter 4 — Thermodynamics
+                </li>
+                <li class="preview-task is-done">
+                  <span class="task-check" aria-hidden="true">✓</span>
+                  Practice set — Linear Algebra
+                </li>
+                <li class="preview-task">
+                  <span class="task-check task-check-empty" aria-hidden="true"></span>
+                  Draft essay outline — History
+                </li>
+              </ul>
+
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ======================= FEATURES ======================= -->
+    <section class="features" id="features">
+      <div class="container">
+
+        <div class="section-heading">
+          <p class="eyebrow">Everything you need, nothing you don't</p>
+          <h2>A calmer way to keep up</h2>
+        </div>
+
+        <div class="feature-grid">
+
+          <article class="glass-card feature-card">
+            <h3>Smart scheduling</h3>
+            <p>Add your deadlines once and StudyFlow spaces out realistic sessions around them, instead of leaving it all to the night before.</p>
+          </article>
+
+          <article class="glass-card feature-card">
+            <h3>Daily focus</h3>
+            <p>Your dashboard shows exactly what to study today — nothing from next week competes for your attention.</p>
+          </article>
+
+          <article class="glass-card feature-card">
+            <h3>Progress tracking</h3>
+            <p>Watch your completion ring fill in as you clear tasks, so progress feels like something you can actually see.</p>
+          </article>
+
+          <article class="glass-card feature-card">
+            <h3>Streak building</h3>
+            <p>Keep your study streak alive one day at a time, and turn "I should study" into a habit that runs on its own.</p>
+          </article>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- ======================= HOW IT WORKS ======================= -->
+    <section class="how-it-works" id="how-it-works">
+      <div class="container">
+
+        <div class="section-heading">
+          <p class="eyebrow">Three steps, one plan</p>
+          <h2>From syllabus to schedule</h2>
+        </div>
+
+        <ol class="steps">
+          <li class="glass-card step-card">
+            <span class="step-index">01</span>
+            <h3>Add your tasks</h3>
+            <p>List out assignments, readings, and exams with their due dates.</p>
+          </li>
+          <li class="glass-card step-card">
+            <span class="step-index">02</span>
+            <h3>Get your daily plan</h3>
+            <p>StudyFlow sorts everything into Today, Upcoming, and Completed for you.</p>
+          </li>
+          <li class="glass-card step-card">
+            <span class="step-index">03</span>
+            <h3>Check things off</h3>
+            <p>Mark tasks done and watch your progress ring and streak grow.</p>
+          </li>
+        </ol>
+
+      </div>
+    </section>
+
+    <!-- ======================= FINAL CTA ======================= -->
+    <section class="final-cta">
+      <div class="container">
+        <div class="glass-card final-cta-card">
+          <h2>Your next study session is one plan away.</h2>
+          <p>No setup fees, no clutter — just a clear plan for today.</p>
+          <a href="register.html" class="btn btn-primary btn-lg">Create your free plan</a>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ======================= FOOTER ======================= -->
+  <footer class="site-footer">
+    <div class="container footer-inner">
+
+      <div class="footer-brand">
+        <span class="logo-text">StudyFlow</span>
+        <p>A calmer way to keep up with school.</p>
+      </div>
+
+      <nav class="footer-col" aria-label="Product">
+        <h4>Product</h4>
+        <ul>
+          <li><a href="#features">Features</a></li>
+          <li><a href="dashboard.html">Dashboard demo</a></li>
+        </ul>
+      </nav>
+
+      <nav class="footer-col" aria-label="Account">
+        <h4>Account</h4>
+        <ul>
+          <li><a href="login.html">Log in</a></li>
+          <li><a href="register.html">Register</a></li>
+        </ul>
+      </nav>
+
+      <p class="footer-legal">© 2026 StudyFlow. Portfolio project — placeholder content only.</p>
+    </div>
+  </footer>
+
+  <script src="scripts.js"></script>
+</body>
+</html>
