@@ -520,30 +520,49 @@ function initAuthForms() {
 // ==========================================
 document.addEventListener('DOMContentLoaded', () => {
 
-    // Check auth token before fetching
     const token = getAuthToken();
-    
-    // Check if the current page is an auth page (login, register, or root index)
-    const isAuthPage = window.location.pathname.includes('login.html') || 
-                       window.location.pathname.includes('register.html') || 
-                       window.location.pathname.includes('index.html') ||
-                       window.location.pathname === '/';
+    const path = window.location.pathname;
 
-    // If not logged in and trying to view dashboard/protected pages -> Redirect to login
-    if (!token && !isAuthPage) {
+    // 1. Identify what page the user is currently on
+    const isLoginPage = path.includes('login.html');
+    const isRegisterPage = path.includes('register.html');
+    const isLandingPage = path.includes('index.html') || path === '/' || path.endsWith('/');
+    const isDashboard = path.includes('dashboard.html');
+
+    // 2. PROTECTED ROUTE GUARD
+    // If user tries to open dashboard without a token -> Redirect to login
+    if (isDashboard && !token) {
         window.location.href = 'login.html';
         return;
     }
 
-    // Only attempt to fetch user data if a token actually exists
-    if (token) {
-        fetchTasksFromBackend();
-        fetchExamsFromBackend(); 
-        fetchNotesFromBackend(); 
+    // 3. ALREADY LOGGED-IN GUARD
+    // If user is already logged in and opens login/register -> Redirect straight to dashboard
+    if (token && (isLoginPage || isRegisterPage)) {
+        window.location.href = 'dashboard.html';
+        return;
     }
 
-    loadSavedProfile();
-    initAuthForms();
-    initCalendar();
-    initCharts();
+    // 4. RUN DASHBOARD CODE ONLY IF WE ARE ON DASHBOARD.HTML
+    if (isDashboard && token) {
+        // Fetch data
+        if (typeof fetchTasksFromBackend === 'function') fetchTasksFromBackend();
+        if (typeof fetchExamsFromBackend === 'function') fetchExamsFromBackend(); 
+        if (typeof fetchNotesFromBackend === 'function') fetchNotesFromBackend(); 
+
+        // Safe component initialization
+        if (typeof loadSavedProfile === 'function') loadSavedProfile();
+        if (typeof initCalendar === 'function') initCalendar();
+        
+        // Prevents the giant blue bar chart glitch
+        const chartCanvas = document.getElementById('weeklyChart');
+        if (chartCanvas && typeof initCharts === 'function') {
+            initCharts();
+        }
+    }
+
+    // Initialize auth form listeners on login/register pages
+    if ((isLoginPage || isRegisterPage) && typeof initAuthForms === 'function') {
+        initAuthForms();
+    }
 });
