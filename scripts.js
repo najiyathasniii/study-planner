@@ -168,7 +168,7 @@ async function deleteTask(id) {
     }
 }
 
-// Single Complete Dashboard Calculator (Updates Main Tab + Side Panel + Analytics)
+// Single Complete Dashboard Calculator
 function updateDashboard() {
     const total = tasks.length;
     const completed = tasks.filter(t => t.completed).length;
@@ -531,10 +531,92 @@ function loadSavedProfile() {
 
 function logoutUser() {
     localStorage.removeItem('token');
+    localStorage.removeItem('userName');
+    localStorage.removeItem('userEmail');
     window.location.href = 'login.html';
 }
 
 function initAuthForms() {
+    // ------------------- LOGIN FORM HANDLER -------------------
+    const loginForm = document.getElementById('loginForm');
+    if (loginForm) {
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const email = document.getElementById('loginEmail')?.value.trim().toLowerCase();
+            const password = document.getElementById('loginPassword')?.value.trim();
+
+            if (!email || !password) {
+                alert('Please enter both email and password.');
+                return;
+            }
+
+            try {
+                // Endpoint matching backend route: /api/login
+                const response = await fetch(`${API_BASE_URL}/api/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    localStorage.setItem('token', data.token);
+                    if (data.user?.name) localStorage.setItem('userName', data.user.name);
+                    if (data.user?.email) localStorage.setItem('userEmail', data.user.email);
+
+                    window.location.href = 'dashboard.html';
+                } else {
+                    alert(data.error || data.message || 'Invalid email or password');
+                }
+            } catch (error) {
+                console.error('Login Error:', error);
+                alert('Unable to connect to server. Please try again.');
+            }
+        });
+    }
+
+    // ------------------- REGISTER FORM HANDLER -------------------
+    const registerForm = document.getElementById('registerForm');
+    if (registerForm) {
+        registerForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const name = document.getElementById('registerName')?.value.trim();
+            const email = document.getElementById('registerEmail')?.value.trim().toLowerCase();
+            const password = document.getElementById('registerPassword')?.value.trim();
+
+            if (!name || !email || !password) {
+                alert('Please fill in all fields!');
+                return;
+            }
+
+            try {
+                // Endpoint matching backend route: /api/register
+                const response = await fetch(`${API_BASE_URL}/api/register`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, email, password })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    alert('Account created successfully! Redirecting to login...');
+                    registerForm.reset();
+                    window.location.href = 'login.html';
+                } else {
+                    alert(data.error || data.message || 'Registration failed.');
+                }
+            } catch (error) {
+                console.error('Registration Error:', error);
+                alert('Unable to connect to server.');
+            }
+        });
+    }
+
+    // Task search bar listener
     const searchInput = document.getElementById('searchTask');
     if (searchInput) {
         searchInput.addEventListener('input', (e) => {
@@ -557,6 +639,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const isRegisterPage = path.includes('register.html');
     const isDashboard = path.includes('dashboard.html');
 
+    // Route Protection
     if (isDashboard && !token) {
         window.location.href = 'login.html';
         return;
@@ -567,6 +650,7 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
     }
 
+    // If on Dashboard with valid auth token, load app state
     if (isDashboard && token) {
         if (typeof fetchTasksFromBackend === 'function') fetchTasksFromBackend();
         if (typeof fetchExamsFromBackend === 'function') fetchExamsFromBackend(); 
@@ -581,7 +665,8 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    if ((isLoginPage || isRegisterPage) && typeof initAuthForms === 'function') {
+    // Initialize forms on Login or Register pages
+    if (isLoginPage || isRegisterPage) {
         initAuthForms();
     }
 });
