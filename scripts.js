@@ -687,44 +687,66 @@ document.addEventListener('DOMContentLoaded', () => {
     setTimeout(renderExams, 100);
 });
 // ==========================================
-// SUBJECT-WISE QUICK NOTES LOGIC
+// SUBJECT-WISE PDF & DOCUMENT HUB LOGIC
 // ==========================================
-let studyNotes = JSON.parse(localStorage.getItem('study_notes')) || [];
+let studyNotes = JSON.parse(localStorage.getItem('study_pdf_notes')) || [];
+let currentSelectedFile = null;
 
 function saveAndRenderNotes() {
-    localStorage.setItem('study_notes', JSON.stringify(studyNotes));
+    try {
+        localStorage.setItem('study_pdf_notes', JSON.stringify(studyNotes));
+    } catch (e) {
+        alert("Storage full! Try deleting older PDFs or uploading smaller files.");
+    }
     renderNotes();
 }
 
-function addQuickNote() {
+function handleFileSelect(event) {
+    const file = event.target.files[0];
+    if (file) {
+        currentSelectedFile = file;
+        const nameDisplay = document.getElementById('selectedFileName');
+        if (nameDisplay) nameDisplay.textContent = `📎 Selected: ${file.name} (${(file.size / (1024 * 1024)).toFixed(2)} MB)`;
+    }
+}
+
+function addPdfNote() {
     const title = document.getElementById('noteTitle')?.value.trim();
     const subject = document.getElementById('noteSubject')?.value.trim() || 'General';
-    const content = document.getElementById('noteContent')?.value.trim();
 
-    if (!title || !content) {
-        alert('Please enter both a note title and some content!');
+    if (!title || !currentSelectedFile) {
+        alert('Please enter a title AND choose a PDF/file to upload!');
         return;
     }
 
-    const newNote = {
-        id: Date.now().toString(),
-        title: title,
-        subject: subject,
-        content: content,
-        date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+    const reader = new FileReader();
+    reader.onload = function (e) {
+        const newNote = {
+            id: Date.now().toString(),
+            title: title,
+            subject: subject,
+            fileName: currentSelectedFile.name,
+            fileType: currentSelectedFile.type,
+            fileData: e.target.result, // Encoded file data
+            date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+        };
+
+        studyNotes.unshift(newNote);
+        saveAndRenderNotes();
+
+        // Reset Inputs
+        document.getElementById('noteTitle').value = '';
+        document.getElementById('noteSubject').value = '';
+        document.getElementById('noteFileInput').value = '';
+        document.getElementById('selectedFileName').textContent = '';
+        currentSelectedFile = null;
     };
 
-    studyNotes.unshift(newNote); // Put newest notes at the top
-    saveAndRenderNotes();
-
-    // Clear inputs
-    document.getElementById('noteTitle').value = '';
-    document.getElementById('noteSubject').value = '';
-    document.getElementById('noteContent').value = '';
+    reader.readAsDataURL(currentSelectedFile);
 }
 
 function deleteNote(id) {
-    studyNotes = studyNotes.filter(note => note.id !== id);
+    studyNotes = studyNotes.filter(n => n.id !== id);
     saveAndRenderNotes();
 }
 
@@ -733,23 +755,17 @@ function renderNotes() {
     if (!notesGrid) return;
 
     notesGrid.innerHTML = '';
-
     if (studyNotes.length === 0) {
-        notesGrid.innerHTML = `<p style="grid-column: 1/-1; color: #888; text-align: center;">No quick notes added yet. Jot down your first note above! 💡</p>`;
+        notesGrid.innerHTML = `<p style="grid-column: 1/-1; color: #888; text-align: center;">No PDFs or study materials uploaded yet! Upload one above 📄</p>`;
         return;
     }
 
     studyNotes.forEach(note => {
         const card = document.createElement('div');
         card.style.cssText = `
-            background: #ffffff;
-            border-radius: 10px;
-            padding: 16px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-            border-top: 4px solid #2563eb;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
+            background: #ffffff; border-radius: 10px; padding: 16px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06); border-left: 5px solid #2563eb;
+            display: flex; flex-direction: column; justify-content: space-between;
         `;
 
         card.innerHTML = `
@@ -759,20 +775,19 @@ function renderNotes() {
                     <span style="font-size: 11px; color: #9ca3af;">${note.date}</span>
                 </div>
                 <h4 style="font-size: 16px; color: #111827; margin-bottom: 6px;">${note.title}</h4>
-                <p style="font-size: 13px; color: #4b5563; white-space: pre-wrap; line-height: 1.5;">${note.content}</p>
+                <p style="font-size: 12px; color: #6b7280; display: flex; align-items: center; gap: 5px;">
+                    <i class="fa-solid fa-file-pdf" style="color: #ef4444; font-size: 16px;"></i> ${note.fileName}
+                </p>
             </div>
-            <div style="text-align: right; margin-top: 15px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 15px;">
+                <a href="${note.fileData}" download="${note.fileName}" style="background: #2563eb; color: white; padding: 6px 12px; border-radius: 6px; text-decoration: none; font-size: 12px; font-weight: 600;">
+                    <i class="fa-solid fa-download"></i> Download / View
+                </a>
                 <button onclick="deleteNote('${note.id}')" style="background: none; border: none; color: #ef4444; cursor: pointer; font-size: 13px;">
-                    <i class="fa-solid fa-trash"></i> Delete
+                    <i class="fa-solid fa-trash"></i>
                 </button>
             </div>
         `;
-
         notesGrid.appendChild(card);
     });
 }
-
-// Render notes on DOM Load
-document.addEventListener('DOMContentLoaded', () => {
-    setTimeout(renderNotes, 100);
-});
