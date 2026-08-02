@@ -12,7 +12,7 @@
     <!-- FullCalendar CSS -->
     <link href="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css" rel="stylesheet">
     
-    <!-- Your Provided Stylesheet -->
+    <!-- Dashboard Stylesheet -->
     <link rel="stylesheet" href="dashboard.css">
 </head>
 <body>
@@ -99,35 +99,21 @@
             </div>
         </section>
 
-        <!-- 2. TASKS TAB (ENHANCED LAYOUT) -->
+        <!-- 2. TASKS TAB -->
         <section id="tasks-sec" class="tab-content">
             <header style="margin-bottom: 20px;">
                 <h1>My Study Tasks 📋</h1>
                 <p>Add, search, filter, and track your daily study goals.</p>
             </header>
 
-            <!-- Grid Layout -->
             <div class="tasks-layout">
-                
-                <!-- LEFT COLUMN: Input, Search, Filters, and Task List -->
+                <!-- LEFT COLUMN: Task Input, Search, Filters, List -->
                 <div class="tasks-main-col">
                     
-                    <!-- Task Input Card -->
-                    <div class="add-task-card">
-                        <div class="add-task-inputs">
-                            <input type="text" id="taskInput" placeholder="Enter new task..." style="flex: 2;">
-                            <input type="date" id="taskDueDate" style="flex: 1;">
-                            <select id="taskSubject" style="flex: 1;">
-                                <option value="General">General</option>
-                                <option value="Math">Math</option>
-                                <option value="Science">Science</option>
-                                <option value="History">History</option>
-                                <option value="English">English</option>
-                            </select>
-                        </div>
-                        <button onclick="addNewTask()" class="btn-add-task">
-                            <i class="fa-solid fa-plus"></i> Add Task
-                        </button>
+                    <!-- Original Clean Add Task -->
+                    <div class="add-task">
+                        <input type="text" id="taskInput" placeholder="Enter new task...">
+                        <button onclick="addNewTask()"><i class="fa-solid fa-plus"></i> Add Task</button>
                     </div>
 
                     <!-- Search & Filter Controls -->
@@ -144,13 +130,13 @@
                         </div>
                     </div>
 
-                    <!-- Dynamic Task List Container -->
+                    <!-- Task List -->
                     <div id="taskList">
-                        <!-- Populated by JS -->
+                        <!-- Dynamically populated by scripts.js -->
                     </div>
                 </div>
 
-                <!-- RIGHT COLUMN: Tasks Summary -->
+                <!-- RIGHT COLUMN: Tasks Overview Summary Panel -->
                 <div class="tasks-side-col">
                     <div class="task-summary-card">
                         <h3><i class="fa-solid fa-chart-pie"></i> Tasks Overview</h3>
@@ -166,17 +152,8 @@
                             <span>Completed</span>
                             <strong id="sideCompleted" style="color: #10b981;">0</strong>
                         </div>
-                        
-                        <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 15px 0;">
-                        
-                        <div style="background: #eff6ff; padding: 12px; border-radius: 10px; border-left: 4px solid #2563eb;">
-                            <p style="font-size: 12px; color: #1e40af; margin: 0; line-height: 1.4;">
-                                💡 <strong>Study Tip:</strong> Set due dates for every task to automatically update your progress charts and schedule!
-                            </p>
-                        </div>
                     </div>
                 </div>
-
             </div>
         </section>
 
@@ -198,11 +175,11 @@
             </div>
 
             <div id="examTrackerList" style="display: flex; flex-direction: column; gap: 12px; margin-top: 20px;">
-                <!-- Dynamically populated by scripts.js -->
+                <!-- Dynamically populated -->
             </div>
         </section>
 
-        <!-- 4. PDF & NOTES HUB TAB -->
+        <!-- 4. PDF & NOTES TAB -->
         <section id="notes-sec" class="tab-content">
             <header>
                 <h1>PDF & Study Materials Hub</h1>
@@ -213,7 +190,7 @@
                 <h3>Upload Notes / PDF</h3>
                 <div class="settings-form">
                     <div style="display: flex; gap: 12px; flex-wrap: wrap;">
-                        <input type="text" id="noteTitle" placeholder="Title (e.g., Organic Chem Summary)" style="flex: 1; padding: 10px; border: 1px solid #cbd5e1; border-radius: 8px;">
+                        <input type="text" id="noteTitle" placeholder="Title" style="flex: 1; padding: 10px; border: 1px solid #cbd5e1; border-radius: 8px;">
                         <input type="text" id="noteSubject" placeholder="Subject" style="flex: 1; padding: 10px; border: 1px solid #cbd5e1; border-radius: 8px;">
                     </div>
                     <div class="profile-upload-group" style="margin-bottom: 0;">
@@ -228,7 +205,7 @@
             </div>
 
             <div id="notesGrid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; margin-top: 25px;">
-                <!-- Dynamically populated by scripts.js -->
+                <!-- Dynamically populated -->
             </div>
         </section>
 
@@ -243,7 +220,7 @@
             </div>
         </section>
 
-        <!-- 6. ANALYTICS / PROGRESS TAB -->
+        <!-- 6. ANALYTICS TAB -->
         <section id="progress-sec" class="tab-content">
             <header>
                 <h1>Performance Analytics</h1>
@@ -266,7 +243,6 @@
             </div>
 
             <div class="analytics-grid">
-                <!-- Bar Chart Wrapper -->
                 <div class="chart-card">
                     <h3>Weekly Task Activity (Mon - Sun)</h3>
                     <div class="chart-container">
@@ -274,7 +250,6 @@
                     </div>
                 </div>
 
-                <!-- Doughnut Chart Wrapper -->
                 <div class="chart-card">
                     <h3>Task Breakdown</h3>
                     <div class="chart-container">
