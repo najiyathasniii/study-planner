@@ -496,8 +496,38 @@ function initCalendar() {
         },
         editable: true,                 // Enables dragging and re-ordering
         droppable: true,                // Enables dropping external events
-        allDayMaintainDuration: false,  // CRITICAL: Allows dragging events OUT of the All-Day header into hourly slots
+        selectable: true,               // CRITICAL: Enables clicking/selecting time slots
+        allDayMaintainDuration: false,  // Allows dragging events OUT of All-Day into hourly slots
         defaultTimedEventDuration: '01:00:00',
+
+        // This runs when you click any time slot on the grid
+        select: async function(info) {
+            const title = prompt('Enter task name:');
+            if (!title || !title.trim()) return;
+
+            const token = getAuthToken();
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/tasks`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ 
+                        title: title.trim(), 
+                        completed: false, 
+                        date: info.startStr // Automatically grabs the exact clicked date/time
+                    })
+                });
+
+                if (response.ok) {
+                    fetchTasksFromBackend();
+                }
+            } catch (error) {
+                console.error('Error adding task from calendar:', error);
+            }
+        },
+
         events: []
     });
     calendar.render();
