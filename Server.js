@@ -10,29 +10,28 @@ const app = express();
 // ==========================================
 // 1. MIDDLEWARE CONFIGURATION
 // ==========================================
-// Allow CORS requests from frontend origins
 app.use(cors({
     origin: '*', 
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
-// Increase payload limit to 20MB to handle PDF Base64 strings safely
+// Payload limit set to 20MB for Base64 image and PDF support
 app.use(express.json({ limit: '20mb' }));
 app.use(express.urlencoded({ limit: '20mb', extended: true }));
 
-// JWT Secret Key
 const JWT_SECRET = process.env.JWT_SECRET || 'your_super_secret_jwt_key_here';
 
 // ==========================================
 // 2. MONGOOSE SCHEMAS & MODELS
 // ==========================================
 
-// User Schema
+// User Schema (ADDED: avatar field)
 const UserSchema = new mongoose.Schema({
     name: { type: String, required: true },
     email: { type: String, required: true, unique: true },
-    password: { type: String, required: true }
+    password: { type: String, required: true },
+    avatar: { type: String, default: '' } // Stores Base64 image
 }, { timestamps: true });
 
 const User = mongoose.model('User', UserSchema);
@@ -64,7 +63,7 @@ const NoteSchema = new mongoose.Schema({
     subject: { type: String, default: 'General' },
     fileName: String,
     fileType: String,
-    fileData: String, // Base64 Data URL
+    fileData: String,
     date: String
 }, { timestamps: true });
 
@@ -112,7 +111,7 @@ app.post('/api/register', async (req, res) => {
         await newUser.save();
 
         const token = jwt.sign({ id: newUser._id, email: newUser.email }, JWT_SECRET, { expiresIn: '7d' });
-        res.status(201).json({ token, user: { id: newUser._id, name: newUser.name, email: newUser.email } });
+        res.status(201).json({ token, user: { id: newUser._id, name: newUser.name, email: newUser.email, avatar: newUser.avatar } });
     } catch (err) {
         res.status(500).json({ error: 'Registration failed' });
     }
@@ -133,7 +132,7 @@ app.post('/api/login', async (req, res) => {
         }
 
         const token = jwt.sign({ id: user._id, email: user.email }, JWT_SECRET, { expiresIn: '7d' });
-        res.json({ token, user: { id: user._id, name: user.name, email: user.email } });
+        res.json({ token, user: { id: user._id, name: user.name, email: user.email, avatar: user.avatar } });
     } catch (err) {
         res.status(500).json({ error: 'Login failed' });
     }
@@ -158,7 +157,7 @@ app.post('/api/forgot-password', async (req, res) => {
     }
 });
 
-// CHANGE PASSWORD (NEW ROUTE REQUIRED BY FRONTEND)
+// Change Password
 app.post('/api/change-password', authenticateToken, async (req, res) => {
     try {
         const { currentPassword, newPassword } = req.body;
@@ -172,13 +171,11 @@ app.post('/api/change-password', authenticateToken, async (req, res) => {
             return res.status(404).json({ error: 'User not found' });
         }
 
-        // Validate old password
         const isMatch = await bcrypt.compare(currentPassword, user.password);
         if (!isMatch) {
             return res.status(400).json({ error: 'Incorrect current password' });
         }
 
-        // Hash new password & save
         const hashedPassword = await bcrypt.hash(newPassword, 10);
         user.password = hashedPassword;
         await user.save();
@@ -190,21 +187,43 @@ app.post('/api/change-password', authenticateToken, async (req, res) => {
     }
 });
 
-// UPDATE USER PROFILE DETAILS (NEW ROUTE)
+// GET USER PROFILE (ADDED: Returns stored avatar to sync devices)
+app.get('/api/user/profile', authenticateToken, async (req, res) => {
+    try {
+        const user = await User.findById(req.user.id);
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+        res.json({ name: user.name, email: user.email, avatar: user.avatar || '' });
+    } catch (err) {
+        res.status(500).json({ error: 'Failed to fetch profile' });
+    }
+});
+
+// UPDATE USER PROFILE & AVATAR (UPDATED: Handles avatar saving)
 app.put('/api/user/profile', authenticateToken, async (req, res) => {
     try {
-        const { name } = req.body;
-        if (!name) {
-            return res.status(400).json({ error: 'Name is required' });
-        }
+        const { name, avatar } = req.body;
+        const updateData = {};
+
+        if (name) updateData.name = name;
+        if (avatar !== undefined) updateData.avatar = avatar;
 
         const updatedUser = await User.findByIdAndUpdate(
             req.user.id,
-            { $set: { name } },
+            { $set: updateData },
             { new: true }
         );
 
-        res.json({ message: 'Profile updated successfully', user: { id: updatedUser._id, name: updatedUser.name, email: updatedUser.email } });
+        res.json({
+            message: 'Profile updated successfully',
+            user: {
+                id: updatedUser._id,
+                name: updatedUser.name,
+                email: updatedUser.email,
+                avatar: updatedUser.avatar
+            }
+        });
     } catch (err) {
         res.status(500).json({ error: 'Failed to update profile' });
     }
