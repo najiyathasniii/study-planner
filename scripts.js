@@ -581,3 +581,108 @@ if (resetBtn) {
         updateDisplay();
     });
 }
+// ==========================================
+// EXAM & ASSIGNMENT TRACKER LOGIC
+// ==========================================
+let examItems = JSON.parse(localStorage.getItem('study_exams')) || [];
+
+function saveAndRenderExams() {
+    localStorage.setItem('study_exams', JSON.stringify(examItems));
+    renderExams();
+}
+
+function addExamTrackerItem() {
+    const title = document.getElementById('examTitleInput')?.value.trim();
+    const subject = document.getElementById('examSubjectInput')?.value.trim() || 'General';
+    const dateValue = document.getElementById('examDateInput')?.value;
+
+    if (!title || !dateValue) {
+        alert('Please enter a title and select a due date!');
+        return;
+    }
+
+    const newItem = {
+        id: Date.now().toString(),
+        title: title,
+        subject: subject,
+        dueDate: dateValue
+    };
+
+    examItems.push(newItem);
+    saveAndRenderExams();
+
+    // Clear inputs
+    document.getElementById('examTitleInput').value = '';
+    document.getElementById('examSubjectInput').value = '';
+    document.getElementById('examDateInput').value = '';
+}
+
+function deleteExamItem(id) {
+    examItems = examItems.filter(item => item.id !== id);
+    saveAndRenderExams();
+}
+
+function getDaysRemainingText(dueDateStr) {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    const dueDate = new Date(dueDateStr);
+    dueDate.setHours(0, 0, 0, 0);
+
+    const diffTime = dueDate - today;
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+    if (diffDays < 0) return { text: 'Overdue', color: '#dc2626', bg: '#fee2e2' };
+    if (diffDays === 0) return { text: 'Due Today!', color: '#dc2626', bg: '#fee2e2' };
+    if (diffDays === 1) return { text: 'Tomorrow!', color: '#d97706', bg: '#fef3c7' };
+    return { text: `${diffDays} days left`, color: '#2563eb', bg: '#dbeafe' };
+}
+
+function renderExams() {
+    const listContainer = document.getElementById('examTrackerList');
+    if (!listContainer) return;
+
+    listContainer.innerHTML = '';
+
+    if (examItems.length === 0) {
+        listContainer.innerHTML = `<p style="color: #888; font-size: 14px; text-align: center;">No upcoming exams or assignments added yet! 🎉</p>`;
+        return;
+    }
+
+    // Sort by nearest due date
+    examItems.sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate));
+
+    examItems.forEach(item => {
+        const badge = getDaysRemainingText(item.dueDate);
+
+        const card = document.createElement('div');
+        card.style.cssText = `
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            padding: 12px 16px; 
+            background: #f9fafb; 
+            border-radius: 8px; 
+            border-left: 4px solid ${badge.color};
+        `;
+
+        card.innerHTML = `
+            <div>
+                <strong style="font-size: 15px; color: #111827;">${item.title}</strong>
+                <span style="font-size: 12px; color: #6b7280; background: #e5e7eb; padding: 2px 8px; border-radius: 12px; margin-left: 8px;">${item.subject}</span>
+                <p style="font-size: 12px; color: #6b7280; margin-top: 2px;">Due: ${item.dueDate}</p>
+            </div>
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <span style="font-size: 12px; font-weight: 600; color: ${badge.color}; background: ${badge.bg}; padding: 4px 10px; border-radius: 12px;">${badge.text}</span>
+                <button onclick="deleteExamItem('${item.id}')" style="background: transparent; border: none; color: #ef4444; cursor: pointer; font-size: 14px;"><i class="fa-solid fa-trash"></i></button>
+            </div>
+        `;
+
+        listContainer.appendChild(card);
+    });
+}
+
+// Initial rendering when page loads
+document.addEventListener('DOMContentLoaded', () => {
+    setTimeout(renderExams, 100);
+});
