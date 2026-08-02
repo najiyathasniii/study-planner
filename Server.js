@@ -279,7 +279,7 @@ app.delete('/api/notes/:id', authenticateToken, async (req, res) => {
 // 8. DATABASE CONNECTION & SERVER LISTEN
 // ==========================================
 const PORT = process.env.PORT || 5000;
-const MONGO_URI = process.env.MONGO_URI || 'your_mongodb_connection_string_here';
+const MONGO_URI = process.env.MONGO_URI ||mongodb+srv://thasnimk1234_db_user:thasnimk1234@cluster0.s1gvlri.mongodb.net/?appName=Cluster0
 
 mongoose.connect(MONGO_URI)
     .then(() => {
