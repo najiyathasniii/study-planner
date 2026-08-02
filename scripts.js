@@ -45,6 +45,46 @@ function showSection(sectionId, element) {
 }
 
 // ==========================================
+// ==========================================
+// TASK MANAGEMENT & FILTER STATE
+// ==========================================
+let currentTaskFilter = 'all';
+
+// Filter Pills Click Handler
+function filterTaskView(filterType, element) {
+    currentTaskFilter = filterType;
+    
+    // Update active tab button style
+    const pills = document.querySelectorAll('.filter-pill');
+    pills.forEach(p => p.classList.remove('active'));
+    if (element) element.classList.add('active');
+
+    applyTaskFilters();
+}
+
+// Search input handler
+function handleTaskSearch(query) {
+    applyTaskFilters(query.toLowerCase().trim());
+}
+
+// Filter combiner logic
+function applyTaskFilters(searchQuery = '') {
+    let filtered = [...tasks];
+
+    // Status filter
+    if (currentTaskFilter === 'pending') filtered = filtered.filter(t => !t.completed);
+    if (currentTaskFilter === 'completed') filtered = filtered.filter(t => t.completed);
+
+    // Search query filter
+    const query = searchQuery || document.getElementById('searchTask')?.value.toLowerCase().trim();
+    if (query) {
+        filtered = filtered.filter(t => t.title.toLowerCase().includes(query));
+    }
+
+    renderTaskList(filtered);
+}
+
+// ==========================================
 // TASK MANAGEMENT (BACKEND API)
 // ==========================================
 async function fetchTasksFromBackend() {
@@ -56,9 +96,9 @@ async function fetchTasksFromBackend() {
         if (response.ok) {
             tasks = await response.json();
             updateDashboard();
-            renderTaskList(tasks);
-            updateCalendarEvents();
-            updateCharts();
+            applyTaskFilters(); // Applies filters and calls renderTaskList()
+            if (typeof updateCalendarEvents === 'function') updateCalendarEvents();
+            if (typeof updateCharts === 'function') updateCharts();
         }
     } catch (error) {
         console.error('Error fetching tasks:', error);
@@ -67,7 +107,13 @@ async function fetchTasksFromBackend() {
 
 async function addNewTask() {
     const input = document.getElementById('taskInput');
+    const dueDateInput = document.getElementById('taskDueDate');
+    const subjectInput = document.getElementById('taskSubject');
+
     const title = input ? input.value.trim() : '';
+    const dueDate = dueDateInput ? dueDateInput.value : '';
+    const subject = subjectInput ? subjectInput.value : 'General';
+
     if (!title) return;
 
     const token = getAuthToken();
@@ -78,11 +124,17 @@ async function addNewTask() {
                 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${token}`
             },
-            body: JSON.stringify({ title, completed: false, date: new Date().toISOString().split('T')[0] })
+            body: JSON.stringify({ 
+                title, 
+                completed: false, 
+                date: dueDate || new Date().toISOString().split('T')[0],
+                subject: subject
+            })
         });
 
         if (response.ok) {
             input.value = '';
+            if (dueDateInput) dueDateInput.value = '';
             fetchTasksFromBackend();
         }
     } catch (error) {
@@ -125,67 +177,72 @@ async function deleteTask(id) {
     }
 }
 
-// ==========================================
-// EXAMS & ASSIGNMENTS TRACKER (BACKEND API)
-// ==========================================
-async function fetchExamsFromBackend() {
-    const token = getAuthToken();
-    try {
-        const response = await fetch(`${API_BASE_URL}/api/exams`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
-        if (response.ok) {
-            examItems = await response.json();
-            renderExams();
-        }
-    } catch (error) {
-        console.error('Error fetching exams:', error);
-    }
-}
+// Modern render implementation with Subject Badge & Due Date
+function renderTaskList(taskList) {
+    const container = document.getElementById('taskList');
+    if (!container) return;
 
-async function addExamTrackerItem() {
-    const title = document.getElementById('examTitleInput')?.value.trim();
-    const subject = document.getElementById('examSubjectInput')?.value.trim() || 'General';
-    const dateValue = document.getElementById('examDateInput')?.value;
+    container.innerHTML = '';
 
-    if (!title || !dateValue) {
-        alert('Please enter a title and select a due date!');
+    if (!taskList || taskList.length === 0) {
+        container.innerHTML = `
+            <div style="text-align: center; padding: 40px 20px; background: white; border-radius: 12px; border: 1px dashed #cbd5e1;">
+                <i class="fa-solid fa-clipboard-check" style="font-size: 36px; color: #cbd5e1; margin-bottom: 10px;"></i>
+                <h4 style="color: #64748b; font-weight: 500; margin: 0;">No tasks found</h4>
+            </div>
+        `;
         return;
     }
 
-    const token = getAuthToken();
-    try {
-        const response = await fetch(`${API_BASE_URL}/api/exams`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-            },
-            body: JSON.stringify({ title, subject, dueDate: dateValue })
-        });
-
-        if (response.ok) {
-            document.getElementById('examTitleInput').value = '';
-            document.getElementById('examSubjectInput').value = '';
-            document.getElementById('examDateInput').value = '';
-            fetchExamsFromBackend();
-        }
-    } catch (error) {
-        console.error('Error adding exam:', error);
-    }
+    taskList.forEach(task => {
+        const item = document.createElement('div');
+        item.className = `task-card-item ${task.completed ? 'completed' : ''}`;
+        
+        item.innerHTML = `
+            <div style="display: flex; align-items: center; gap: 14px;">
+                <input type="checkbox" ${task.completed ? 'checked' : ''} onchange="toggleTask('${task._id}', ${task.completed})" style="width: 18px; height: 18px; accent-color: #2563eb; cursor: pointer;">
+                <div>
+                    <span style="${task.completed ? 'text-decoration: line-through; color: #94a3b8;' : 'color: #0f172a; font-weight: 500;'}">${task.title}</span>
+                    <div style="display: flex; gap: 8px; align-items: center; margin-top: 4px;">
+                        <span style="font-size: 11px; background: #dbeafe; color: #1e40af; font-weight: 600; padding: 2px 8px; border-radius: 10px;">
+                            ${task.subject || 'General'}
+                        </span>
+                        <span style="font-size: 11px; color: #94a3b8;">
+                            <i class="fa-regular fa-calendar"></i> ${task.date || 'Today'}
+                        </span>
+                    </div>
+                </div>
+            </div>
+            <button onclick="deleteTask('${task._id}')" style="background: #fee2e2; border: none; color: #ef4444; width: 32px; height: 32px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center;">
+                <i class="fa-solid fa-trash" style="font-size: 12px;"></i>
+            </button>
+        `;
+        container.appendChild(item);
+    });
 }
 
-async function deleteExamItem(id) {
-    const token = getAuthToken();
-    try {
-        const response = await fetch(`${API_BASE_URL}/api/exams/${id}`, {
-            method: 'DELETE',
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
-        if (response.ok) fetchExamsFromBackend();
-    } catch (error) {
-        console.error('Error deleting exam:', error);
-    }
+// Dashboard metrics calculator (Updates main tab AND right-side task panel)
+function updateDashboard() {
+    const total = tasks.length;
+    const completed = tasks.filter(t => t.completed).length;
+    const pending = total - completed;
+    const percentage = total === 0 ? 0 : Math.round((completed / total) * 100);
+
+    // Main Stat Cards
+    if (document.getElementById('totalTasks')) document.getElementById('totalTasks').textContent = total;
+    if (document.getElementById('completedTasks')) document.getElementById('completedTasks').textContent = completed;
+    if (document.getElementById('pendingTasks')) document.getElementById('pendingTasks').textContent = pending;
+
+    // Right-Side Task Panel Metrics
+    if (document.getElementById('sideTotal')) document.getElementById('sideTotal').textContent = total;
+    if (document.getElementById('sideCompleted')) document.getElementById('sideCompleted').textContent = completed;
+    if (document.getElementById('sidePending')) document.getElementById('sidePending').textContent = pending;
+
+    // Progress Bar
+    const progressBar = document.getElementById('progressBar');
+    const progressText = document.getElementById('progressText');
+    if (progressBar) progressBar.value = percentage;
+    if (progressText) progressText.textContent = `${percentage}% Completed`;
 }
 
 // ==========================================
