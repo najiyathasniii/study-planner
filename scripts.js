@@ -531,3 +531,53 @@ document.addEventListener('DOMContentLoaded', () => {
     loadSavedProfile();
     initAuthForms();
 });
+// ==========================================
+// POMODORO TIMER LOGIC
+// ==========================================
+let timeLeft = 25 * 60; // 25 minutes in seconds
+let timerId = null;
+
+const timerDisplay = document.getElementById('timer-display');
+const startBtn = document.getElementById('start-btn');
+const pauseBtn = document.getElementById('pause-btn');
+const resetBtn = document.getElementById('reset-btn');
+
+function updateDisplay() {
+    if (!timerDisplay) return;
+    const minutes = Math.floor(timeLeft / 60);
+    const seconds = timeLeft % 60;
+    timerDisplay.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+}
+
+if (startBtn) {
+    startBtn.addEventListener('click', () => {
+        if (timerId !== null) return;
+        
+        timerId = setInterval(() => {
+            if (timeLeft > 0) {
+                timeLeft--;
+                updateDisplay();
+            } else {
+                clearInterval(timerId);
+                timerId = null;
+                alert('🎉 Pomodoro finished! Time to take a 5-minute break.');
+            }
+        }, 1000);
+    });
+}
+
+if (pauseBtn) {
+    pauseBtn.addEventListener('click', () => {
+        clearInterval(timerId);
+        timerId = null;
+    });
+}
+
+if (resetBtn) {
+    resetBtn.addEventListener('click', () => {
+        clearInterval(timerId);
+        timerId = null;
+        timeLeft = 25 * 60;
+        updateDisplay();
+    });
+}
