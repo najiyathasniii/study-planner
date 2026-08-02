@@ -824,3 +824,57 @@ document.addEventListener('DOMContentLoaded', () => {
         initAuthForms();
     }
 });
+let pomoInterval = null;
+let pomoSecondsLeft = 25 * 60;
+let defaultMinutes = 25;
+let isPomoRunning = false;
+
+function updateTimerDisplay() {
+    const mins = Math.floor(pomoSecondsLeft / 60);
+    const secs = pomoSecondsLeft % 60;
+    const display = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+    
+    const clockEl = document.getElementById('pomoTimerDisplay');
+    if (clockEl) clockEl.textContent = display;
+}
+
+function setTimerMode(minutes, buttonEl) {
+    pausePomodoro();
+    defaultMinutes = minutes;
+    pomoSecondsLeft = minutes * 60;
+    updateTimerDisplay();
+
+    const btns = document.querySelectorAll('.timer-mode-btn');
+    btns.forEach(b => b.classList.remove('active'));
+    if (buttonEl) {
+        buttonEl.classList.add('active');
+    }
+}
+
+function startPomodoro() {
+    if (isPomoRunning) return;
+    isPomoRunning = true;
+
+    pomoInterval = setInterval(() => {
+        if (pomoSecondsLeft > 0) {
+            pomoSecondsLeft--;
+            updateTimerDisplay();
+        } else {
+            clearInterval(pomoInterval);
+            isPomoRunning = false;
+            alert('🎉 Time is up! Take a break or start another focus session.');
+            resetPomodoro();
+        }
+    }, 1000);
+}
+
+function pausePomodoro() {
+    clearInterval(pomoInterval);
+    isPomoRunning = false;
+}
+
+function resetPomodoro() {
+    pausePomodoro();
+    pomoSecondsLeft = defaultMinutes * 60;
+    updateTimerDisplay();
+}
