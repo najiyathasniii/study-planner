@@ -244,19 +244,26 @@ async function fetchExamsFromBackend() {
 }
 
 async function addNewExam() {
-    // Looks for inputs by ID or relative form inputs
     const titleInput = document.getElementById('examTitle') || document.querySelector('.add-exam-form input[type="text"]:nth-of-type(1)');
     const subjectInput = document.getElementById('examSubject') || document.querySelector('.add-exam-form input[type="text"]:nth-of-type(2)');
     const dateInput = document.getElementById('examDate') || document.querySelector('.add-exam-form input[type="date"]');
 
     const title = titleInput ? titleInput.value.trim() : '';
     const subject = subjectInput ? subjectInput.value.trim() : 'General';
-    const dueDate = dateInput ? dateInput.value : '';
+    let rawDate = dateInput ? dateInput.value : '';
 
-    if (!title || !dueDate) {
+    if (!title || !rawDate) {
         alert('Please fill in both the Title and the Due Date!');
         return;
     }
+
+    // Standardize date input to YYYY-MM-DD ISO string
+    const parsedDate = new Date(rawDate);
+    if (isNaN(parsedDate.getTime())) {
+        alert('Please enter a valid date!');
+        return;
+    }
+    const dueDate = parsedDate.toISOString().split('T')[0];
 
     const token = getAuthToken();
     try {
@@ -276,7 +283,7 @@ async function addNewExam() {
             fetchExamsFromBackend();
         } else {
             const errData = await response.json();
-            alert(errData.error || 'Failed to add exam item.');
+            alert(errData.error || errData.message || 'Failed to add exam item.');
         }
     } catch (error) {
         console.error('Error adding exam:', error);
@@ -747,7 +754,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const isLoginPage = path.includes('login.html');
     const isRegisterPage = path.includes('register.html');
     const isForgotPasswordPage = path.includes('forgot-password.html');
-    const isDashboard = path.includes('dashboard.html');
+    const isDashboard = path.includes('dashboard.html') || path === '/' || path === '';
 
     // Route Protection
     if (isDashboard && !token) {
@@ -766,11 +773,11 @@ document.addEventListener('DOMContentLoaded', () => {
         fileInput.addEventListener('change', handleFileSelect);
     }
 
-    // If on Dashboard with valid auth token, load app state
-    if (isDashboard && token) {
-        if (typeof fetchTasksFromBackend === 'function') fetchTasksFromBackend();
-        if (typeof fetchExamsFromBackend === 'function') fetchExamsFromBackend(); 
-        if (typeof fetchNotesFromBackend === 'function') fetchNotesFromBackend(); 
+    // If on Dashboard with valid auth token, load state
+    if (token) {
+        fetchTasksFromBackend();
+        fetchExamsFromBackend();
+        fetchNotesFromBackend();
 
         if (typeof loadSavedProfile === 'function') loadSavedProfile();
         if (typeof initCalendar === 'function') initCalendar();
