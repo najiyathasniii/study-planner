@@ -132,20 +132,25 @@ progress {
     color: #64748b;
 }
 
-/* Base Add Task Styles */
+/* Add Task Styles */
 .add-task {
     display: flex;
     gap: 12px;
-    margin: 20px 0;
+    margin-bottom: 20px;
 }
 
-.add-task input, .add-task select {
-    padding: 12px 15px;
+.add-task input {
+    flex: 1;
+    padding: 12px 16px;
     border: 1px solid #cbd5e1;
     border-radius: 10px;
     outline: none;
     font-size: 14px;
     background: white;
+}
+
+.add-task input:focus {
+    border-color: #2563eb;
 }
 
 .add-task button {
@@ -164,74 +169,17 @@ progress {
     background-color: #1d4ed8;
 }
 
-/* ==========================================
-   ENHANCED TASKS PAGE STYLES
-   ========================================== */
-
+/* Tasks Grid Layout */
 .tasks-layout {
     display: grid;
     grid-template-columns: 2.8fr 1fr;
     gap: 25px;
-    margin-top: 10px;
 }
 
 @media (max-width: 990px) {
     .tasks-layout {
         grid-template-columns: 1fr;
     }
-}
-
-.add-task-card {
-    background: #ffffff;
-    border: 1px solid #e2e8f0;
-    padding: 16px;
-    border-radius: 14px;
-    margin-bottom: 20px;
-    display: flex;
-    gap: 12px;
-    flex-wrap: wrap;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
-}
-
-.add-task-inputs {
-    display: flex;
-    gap: 10px;
-    flex: 1;
-    min-width: 280px;
-}
-
-.add-task-inputs input,
-.add-task-inputs select {
-    padding: 11px 14px;
-    border: 1px solid #cbd5e1;
-    border-radius: 10px;
-    outline: none;
-    font-size: 14px;
-    background: #ffffff;
-    transition: all 0.2s;
-}
-
-.add-task-inputs input:focus,
-.add-task-inputs select:focus {
-    border-color: #2563eb;
-    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
-}
-
-.btn-add-task {
-    background: #2563eb;
-    color: white;
-    border: none;
-    padding: 11px 22px;
-    border-radius: 10px;
-    font-weight: 500;
-    cursor: pointer;
-    white-space: nowrap;
-    transition: 0.2s ease;
-}
-
-.btn-add-task:hover {
-    background: #1d4ed8;
-    transform: translateY(-1px);
 }
 
 .task-controls {
@@ -313,12 +261,11 @@ progress {
 
 .task-card-item:hover {
     border-color: #cbd5e1;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.04);
 }
 
-.task-card-item.completed {
-    background: #f8fafc;
-    border-color: #f1f5f9;
+.task-card-item.completed span {
+    text-decoration: line-through;
+    color: #94a3b8;
 }
 
 .task-summary-card {
@@ -440,10 +387,6 @@ progress {
     border-radius: 50%;
     object-fit: cover;
     border: 3px solid #2563eb;
-}
-
-.upload-btn-wrapper input[type=file] {
-    display: none;
 }
 
 .btn-secondary {
