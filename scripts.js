@@ -39,6 +39,8 @@ function showSection(sectionId, element) {
         setTimeout(() => {
             calendar.updateSize();
             calendar.render();
+            // FIXED: Force calendar to re-sync events from DB whenever the tab is opened
+            updateCalendarEvents(); 
         }, 100);
     }
 
@@ -540,6 +542,9 @@ function initCalendar() {
         events: []
     });
     calendar.render();
+    
+    // FIXED: Render existing events onto the calendar on load
+    updateCalendarEvents(); 
 }
 
 function updateCalendarEvents() {
@@ -865,196 +870,27 @@ function initAuthForms() {
             }
 
             try {
+                // FIXED: Repaired the broken fetch request at the end of the file
                 const response = await fetch(`${API_BASE_URL}/api/register`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ name, email, password })
                 });
-
+                
                 const data = await response.json();
-
+                
                 if (response.ok) {
-                    alert('Account created successfully! Redirecting to login...');
-                    registerForm.reset();
-                    window.location.href = 'login.html';
+                    localStorage.setItem('token', data.token);
+                    if (data.user?.name) localStorage.setItem('userName', data.user.name);
+                    if (data.user?.email) localStorage.setItem('userEmail', data.user.email);
+                    window.location.href = 'dashboard.html';
                 } else {
-                    alert(data.error || data.message || 'Registration failed.');
+                    alert(data.error || data.message || 'Registration failed');
                 }
             } catch (error) {
                 console.error('Registration Error:', error);
-                alert('Unable to connect to server.');
+                alert('Unable to connect to server. Please try again.');
             }
         });
     }
 }
-
-// ==========================================
-// POMODORO TIMER & ALARM NOTIFICATION LOGIC
-// ==========================================
-let pomoInterval = null;
-let pomoSecondsLeft = 25 * 60;
-let defaultMinutes = 25;
-let isPomoRunning = false;
-
-function updateTimerDisplay() {
-    const mins = Math.floor(pomoSecondsLeft / 60);
-    const secs = pomoSecondsLeft % 60;
-    const display = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
-    
-    const clockEl = document.getElementById('pomoTimerDisplay');
-    if (clockEl) clockEl.textContent = display;
-}
-
-function setTimerMode(minutes, buttonEl) {
-    pausePomodoro();
-    defaultMinutes = minutes;
-    pomoSecondsLeft = minutes * 60;
-    updateTimerDisplay();
-
-    const btns = document.querySelectorAll('.timer-mode-btn');
-    btns.forEach(b => b.classList.remove('active'));
-    if (buttonEl) {
-        buttonEl.classList.add('active');
-    }
-}
-
-function startPomodoro() {
-    if (isPomoRunning) return;
-
-    // Request notification permission on start
-    if ("Notification" in window && Notification.permission === "default") {
-        Notification.requestPermission();
-    }
-
-    isPomoRunning = true;
-
-    pomoInterval = setInterval(() => {
-        if (pomoSecondsLeft > 0) {
-            pomoSecondsLeft--;
-            updateTimerDisplay();
-        } else {
-            clearInterval(pomoInterval);
-            isPomoRunning = false;
-            
-            // 1. Play Web Audio Chime Sound
-            playAlarmSound();
-
-            // 2. Trigger System Push Notification
-            triggerNotification('Pomodoro Timer Complete! 🎉', 'Time is up! Take a quick break or start your next focus session.');
-
-            // 3. Display Browser Alert Backup
-            alert('🎉 Time is up! Take a break or start another focus session.');
-            resetPomodoro();
-        }
-    }, 1000);
-}
-
-function pausePomodoro() {
-    clearInterval(pomoInterval);
-    isPomoRunning = false;
-}
-
-function resetPomodoro() {
-    pausePomodoro();
-    pomoSecondsLeft = defaultMinutes * 60;
-    updateTimerDisplay();
-}
-
-// Web Audio API Synthesizer Sound (No external file needed)
-function playAlarmSound() {
-    try {
-        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        const playBeep = (freq, startTime, duration) => {
-            const osc = audioCtx.createOscillator();
-            const gain = audioCtx.createGain();
-            osc.type = 'sine';
-            osc.frequency.setValueAtTime(freq, startTime);
-            gain.gain.setValueAtTime(0.3, startTime);
-            gain.gain.exponentialRampToValueAtTime(0.01, startTime + duration);
-            osc.connect(gain);
-            gain.connect(audioCtx.destination);
-            osc.start(startTime);
-            osc.stop(startTime + duration);
-        };
-
-        const now = audioCtx.currentTime;
-        playBeep(587.33, now, 0.2);        // D5 note
-        playBeep(880, now + 0.25, 0.2);    // A5 note
-        playBeep(1174.66, now + 0.5, 0.4);  // D6 note
-    } catch (e) {
-        console.error('Audio playback error:', e);
-    }
-}
-
-// Triggers system popup notification on mobile and desktop OS
-function triggerNotification(title, body) {
-    if ("Notification" in window && Notification.permission === "granted") {
-        new Notification(title, {
-            body: body,
-            icon: 'https://cdn-icons-png.flaticon.com/512/3208/3208726.png'
-        });
-    }
-}
-
-// ==========================================
-// INITIALIZE & AUTO-SYNC LISTENERS
-// ==========================================
-document.addEventListener('DOMContentLoaded', () => {
-    const token = getAuthToken();
-    const path = window.location.pathname;
-
-    const isLoginPage = path.includes('login.html');
-    const isRegisterPage = path.includes('register.html');
-    const isForgotPasswordPage = path.includes('forgot-password.html');
-    const isDashboard = path.includes('dashboard.html') || path === '/' || path === '';
-
-    if (isDashboard && !token) {
-        window.location.href = 'login.html';
-        return;
-    }
-
-    if (token && (isLoginPage || isRegisterPage || isForgotPasswordPage)) {
-        window.location.href = 'dashboard.html';
-        return;
-    }
-
-    const fileInput = document.getElementById('noteFileInput');
-    if (fileInput) {
-        fileInput.addEventListener('change', handleFileSelect);
-    }
-
-    if (token) {
-        fetchTasksFromBackend();
-        fetchExamsFromBackend();
-        fetchNotesFromBackend();
-
-        if (typeof loadSavedProfile === 'function') loadSavedProfile();
-        if (typeof initCalendar === 'function') initCalendar();
-        
-        const chartCanvas = document.getElementById('weeklyChart');
-        if (chartCanvas && typeof initCharts === 'function') {
-            initCharts();
-        }
-    }
-
-    if (isLoginPage || isRegisterPage || isForgotPasswordPage) {
-        initAuthForms();
-    }
-});
-
-// Auto-Sync Data whenever switching back to the app tab
-window.addEventListener('visibilitychange', () => {
-    if (document.visibilityState === 'visible' && getAuthToken()) {
-        fetchTasksFromBackend();
-        fetchExamsFromBackend();
-        loadSavedProfile();
-    }
-});
-
-// Real-Time Background Auto-Syncing Every 15 Seconds across phone & laptop
-setInterval(() => {
-    if (getAuthToken() && document.visibilityState === 'visible') {
-        fetchTasksFromBackend();
-        fetchExamsFromBackend();
-    }
-}, 15000);
