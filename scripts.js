@@ -552,7 +552,6 @@ function initAuthForms() {
             }
 
             try {
-                // Endpoint matching backend route: /api/login
                 const response = await fetch(`${API_BASE_URL}/api/login`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -593,7 +592,6 @@ function initAuthForms() {
             }
 
             try {
-                // Endpoint matching backend route: /api/register
                 const response = await fetch(`${API_BASE_URL}/api/register`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -612,6 +610,41 @@ function initAuthForms() {
             } catch (error) {
                 console.error('Registration Error:', error);
                 alert('Unable to connect to server.');
+            }
+        });
+    }
+
+    // ------------------- FORGOT PASSWORD FORM HANDLER -------------------
+    const forgotPasswordForm = document.getElementById('forgotPasswordForm');
+    if (forgotPasswordForm) {
+        forgotPasswordForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const email = document.getElementById('forgotEmail')?.value.trim().toLowerCase();
+
+            if (!email) {
+                alert('Please enter your email address.');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/forgot-password`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    alert(data.message || 'If an account exists, reset instructions have been sent!');
+                    window.location.href = 'login.html';
+                } else {
+                    alert(data.error || data.message || 'Unable to process request.');
+                }
+            } catch (error) {
+                console.error('Forgot Password Error:', error);
+                alert('Unable to connect to server. Please try again.');
             }
         });
     }
@@ -637,6 +670,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const isLoginPage = path.includes('login.html');
     const isRegisterPage = path.includes('register.html');
+    const isForgotPasswordPage = path.includes('forgot-password.html');
     const isDashboard = path.includes('dashboard.html');
 
     // Route Protection
@@ -645,7 +679,7 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
     }
 
-    if (token && (isLoginPage || isRegisterPage)) {
+    if (token && (isLoginPage || isRegisterPage || isForgotPasswordPage)) {
         window.location.href = 'dashboard.html';
         return;
     }
@@ -665,8 +699,8 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // Initialize forms on Login or Register pages
-    if (isLoginPage || isRegisterPage) {
+    // Initialize forms on Login, Register, or Forgot Password pages
+    if (isLoginPage || isRegisterPage || isForgotPasswordPage) {
         initAuthForms();
     }
 });
