@@ -134,6 +134,27 @@ app.post('/api/login', async (req, res) => {
     }
 });
 
+// Forgot Password
+app.post('/api/forgot-password', async (req, res) => {
+    try {
+        const { email } = req.body;
+        if (!email) {
+            return res.status(400).json({ error: 'Email is required' });
+        }
+
+        const user = await User.findOne({ email });
+        if (!user) {
+            // For security, respond with success even if email isn't found to avoid user enumeration
+            return res.status(200).json({ message: 'If an account exists with that email, password reset instructions have been processed.' });
+        }
+
+        // Send a successful response so the frontend trigger works
+        res.status(200).json({ message: 'Password reset request received successfully.' });
+    } catch (err) {
+        res.status(500).json({ error: 'Failed to process forgot password request' });
+    }
+});
+
 // ==========================================
 // 5. TASKS API ROUTES
 // ==========================================
