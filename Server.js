@@ -1,268 +1,291 @@
-/* =============================================================
-   STUDYPLANNER BACKEND — server.js
-   Express + MongoDB Atlas (Mongoose) + JWT auth, all in one file
-   as requested. Sections are separated by comment headers so it's
-   easy to find things even without splitting into multiple files.
-   ============================================================= */
-
 require('dotenv').config();
-
 const express = require('express');
 const mongoose = require('mongoose');
-const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken');
 const cors = require('cors');
+const jwt = require('jsonwebtoken');
+const bcrypt = require('bcryptjs');
 
 const app = express();
 
-// ---------- Global middleware ----------
-app.use(cors({
-  origin: [
-    'https://study-planner-six-beige.vercel.app', // Allows your live Vercel website
-    'http://localhost:5500',                      // Allows local testing
-    'http://localhost:3000'                       // Allows local testing
-  ],
-  methods: ['GET', 'POST', 'PUT', 'DELETE'],
-  allowedHeaders: ['Content-Type', 'Authorization']
-}));
-app.use(express.json()); // Parses incoming JSON request bodies into req.body.
+// ==========================================
+// 1. MIDDLEWARE CONFIGURATION
+// ==========================================
+app.use(cors());
 
-// Health check route so you can easily test if the server is awake
-app.get('/', (req, res) => {
-  res.send('Study Planner Backend is perfectly awake and running!');
-});
+// Increase payload limit to 20MB to handle PDF Base64 strings safely
+app.use(express.json({ limit: '20mb' }));
+app.use(express.urlencoded({ limit: '20mb', extended: true }));
 
-// ---------- Environment variables ----------
-const PORT = process.env.PORT || 5000;
-const MONGO_URI = process.env.MONGO_URI;
-const JWT_SECRET = process.env.JWT_SECRET;
+// JWT Secret Key
+const JWT_SECRET = process.env.JWT_SECRET || 'your_super_secret_jwt_key_here';
 
-if (!MONGO_URI || !JWT_SECRET) {
-  console.error('Missing MONGO_URI or JWT_SECRET in your .env file.');
-  process.exit(1);
+// ==========================================
+// 2. MONGOOSE SCHEMAS & MODELS
+// ==========================================
+
+// User Schema
+const UserSchema = new mongoose.Schema({
+    name: { type: String, required: true },
+    email: { type: String, required: true, unique: true },
+    password: { type: String, required: true }
+}, { timestamps: true });
+
+const User = mongoose.model('User', UserSchema);
+
+// Task Schema
+const TaskSchema = new mongoose.Schema({
+    userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+    title: { type: String, required: true },
+    completed: { type: Boolean, default: false },
+    date: { type: String, default: () => new Date().toISOString().split('T')[0] }
+}, { timestamps: true });
+
+const Task = mongoose.model('Task', TaskSchema);
+
+// Exam / Assignment Schema
+const ExamSchema = new mongoose.Schema({
+    userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+    title: { type: String, required: true },
+    subject: { type: String, default: 'General' },
+    dueDate: { type: String, required: true }
+}, { timestamps: true });
+
+const Exam = mongoose.model('Exam', ExamSchema);
+
+// PDF / Note Schema
+const NoteSchema = new mongoose.Schema({
+    userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+    title: { type: String, required: true },
+    subject: { type: String, default: 'General' },
+    fileName: String,
+    fileType: String,
+    fileData: String, // Base64 Data URL
+    date: String
+}, { timestamps: true });
+
+const Note = mongoose.model('Note', NoteSchema);
+
+// ==========================================
+// 3. AUTHENTICATION MIDDLEWARE
+// ==========================================
+function authenticateToken(req, res, next) {
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.split(' ')[1];
+
+    if (!token) {
+        return res.status(401).json({ error: 'Access token required' });
+    }
+
+    jwt.verify(token, JWT_SECRET, (err, user) => {
+        if (err) {
+            return res.status(403).json({ error: 'Invalid or expired token' });
+        }
+        req.user = user;
+        next();
+    });
 }
 
-/* =============================================================
-   DATABASE CONNECTION
-   ============================================================= */
+// ==========================================
+// 4. AUTHENTICATION ROUTES
+// ==========================================
 
-mongoose
-  .connect(MONGO_URI)
-  .then(() => console.log('Connected to MongoDB Atlas'))
-  .catch((err) => {
-    console.error('MongoDB connection error:', err.message);
-    process.exit(1);
-  });
-
-/* =============================================================
-   SCHEMAS & MODELS
-   ============================================================= */
-
-// A registered user. Passwords are never stored in plain text —
-// only the bcrypt hash is saved.
-const userSchema = new mongoose.Schema(
-  {
-    name: { type: String, required: true, trim: true },
-    email: { type: String, required: true, unique: true, lowercase: true, trim: true },
-    password: { type: String, required: true } // bcrypt hash, not plain text
-  },
-  { timestamps: true }
-);
-
-const User = mongoose.model('User', userSchema);
-
-// A single study task, always owned by exactly one user.
-const taskSchema = new mongoose.Schema(
-  {
-    user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-    title: { type: String, required: true, trim: true },
-    tag: { type: String, trim: true, default: '' },       // e.g. subject: "Physics"
-    meta: { type: String, trim: true, default: '' },      // e.g. "Due 5:00 PM" / "Tomorrow"
-    status: { type: String, enum: ['today', 'upcoming', 'completed'], default: 'today' }
-  },
-  { timestamps: true }
-);
-
-const Task = mongoose.model('Task', taskSchema);
-
-/* =============================================================
-   AUTH MIDDLEWARE
-   Verifies the JWT sent in the Authorization header and attaches
-   the decoded user id to req.userId for downstream routes.
-   Expected header format: "Authorization: Bearer <token>"
-   ============================================================= */
-
-function requireAuth(req, res, next) {
-  const authHeader = req.headers.authorization;
-
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return res.status(401).json({ message: 'No token provided.' });
-  }
-
-  const token = authHeader.split(' ')[1];
-
-  try {
-    const decoded = jwt.verify(token, JWT_SECRET);
-    req.userId = decoded.userId;
-    next();
-  } catch (err) {
-    return res.status(401).json({ message: 'Invalid or expired token.' });
-  }
-}
-
-/* =============================================================
-   AUTH ROUTES
-   ============================================================= */
-
-// POST /api/register — creates a new user account and returns a token,
-// so the frontend can log the person straight in after registering.
+// Register User
 app.post('/api/register', async (req, res) => {
-  try {
-    const { name, email, password } = req.body;
+    try {
+        const { name, email, password } = req.body;
+        if (!name || !email || !password) {
+            return res.status(400).json({ error: 'All fields are required' });
+        }
 
-    if (!name || !email || !password) {
-      return res.status(400).json({ message: 'Name, email, and password are all required.' });
+        const existingUser = await User.findOne({ email });
+        if (existingUser) {
+            return res.status(400).json({ error: 'Email already registered' });
+        }
+
+        const hashedPassword = await bcrypt.hash(password, 10);
+        const newUser = new User({ name, email, password: hashedPassword });
+        await newUser.save();
+
+        const token = jwt.sign({ id: newUser._id, email: newUser.email }, JWT_SECRET, { expiresIn: '7d' });
+        res.status(201).json({ token, user: { id: newUser._id, name: newUser.name, email: newUser.email } });
+    } catch (err) {
+        res.status(500).json({ error: 'Registration failed' });
     }
-
-    const existingUser = await User.findOne({ email: email.toLowerCase() });
-    if (existingUser) {
-      return res.status(409).json({ message: 'An account with this email already exists.' });
-    }
-
-    const hashedPassword = await bcrypt.hash(password, 10);
-
-    const user = await User.create({
-      name,
-      email: email.toLowerCase(),
-      password: hashedPassword
-    });
-
-    const token = jwt.sign({ userId: user._id }, JWT_SECRET, { expiresIn: '7d' });
-
-    res.status(201).json({
-      token,
-      user: { id: user._id, name: user.name, email: user.email }
-    });
-  } catch (err) {
-    console.error('Register error:', err);
-    res.status(500).json({ message: 'Something went wrong while registering.' });
-  }
 });
 
-// POST /api/login — verifies credentials and returns a fresh token.
+// Login User
 app.post('/api/login', async (req, res) => {
-  try {
-    const { email, password } = req.body;
+    try {
+        const { email, password } = req.body;
+        const user = await User.findOne({ email });
+        if (!user) {
+            return res.status(400).json({ error: 'Invalid email or password' });
+        }
 
-    if (!email || !password) {
-      return res.status(400).json({ message: 'Email and password are required.' });
+        const validPassword = await bcrypt.compare(password, user.password);
+        if (!validPassword) {
+            return res.status(400).json({ error: 'Invalid email or password' });
+        }
+
+        const token = jwt.sign({ id: user._id, email: user.email }, JWT_SECRET, { expiresIn: '7d' });
+        res.json({ token, user: { id: user._id, name: user.name, email: user.email } });
+    } catch (err) {
+        res.status(500).json({ error: 'Login failed' });
     }
+});
 
-    const user = await User.findOne({ email: email.toLowerCase() });
-    if (!user) {
-      return res.status(401).json({ message: 'Invalid email or password.' });
+// ==========================================
+// 5. TASKS API ROUTES
+// ==========================================
+
+// Get Tasks
+app.get('/api/tasks', authenticateToken, async (req, res) => {
+    try {
+        const tasks = await Task.find({ userId: req.user.id }).sort({ createdAt: -1 });
+        res.json(tasks);
+    } catch (err) {
+        res.status(500).json({ error: 'Failed to fetch tasks' });
     }
+});
 
-    const passwordMatches = await bcrypt.compare(password, user.password);
-    if (!passwordMatches) {
-      return res.status(401).json({ message: 'Invalid email or password.' });
+// Add Task
+app.post('/api/tasks', authenticateToken, async (req, res) => {
+    try {
+        const { title, completed, date } = req.body;
+        const newTask = new Task({
+            userId: req.user.id,
+            title,
+            completed: completed || false,
+            date: date || new Date().toISOString().split('T')[0]
+        });
+        await newTask.save();
+        res.status(201).json(newTask);
+    } catch (err) {
+        res.status(500).json({ error: 'Failed to create task' });
     }
+});
 
-    const token = jwt.sign({ userId: user._id }, JWT_SECRET, { expiresIn: '7d' });
+// Update Task
+app.put('/api/tasks/:id', authenticateToken, async (req, res) => {
+    try {
+        const { completed, title } = req.body;
+        const updatedTask = await Task.findOneAndUpdate(
+            { _id: req.params.id, userId: req.user.id },
+            { $set: { ...(completed !== undefined && { completed }), ...(title && { title }) } },
+            { new: true }
+        );
+        res.json(updatedTask);
+    } catch (err) {
+        res.status(500).json({ error: 'Failed to update task' });
+    }
+});
 
-    res.json({
-      token,
-      user: { id: user._id, name: user.name, email: user.email }
+// Delete Task
+app.delete('/api/tasks/:id', authenticateToken, async (req, res) => {
+    try {
+        await Task.findOneAndDelete({ _id: req.params.id, userId: req.user.id });
+        res.json({ message: 'Task deleted successfully' });
+    } catch (err) {
+        res.status(500).json({ error: 'Failed to delete task' });
+    }
+});
+
+// ==========================================
+// 6. EXAMS & ASSIGNMENTS API ROUTES
+// ==========================================
+
+// Get Exams
+app.get('/api/exams', authenticateToken, async (req, res) => {
+    try {
+        const exams = await Exam.find({ userId: req.user.id }).sort({ dueDate: 1 });
+        res.json(exams);
+    } catch (err) {
+        res.status(500).json({ error: 'Failed to fetch exams' });
+    }
+});
+
+// Add Exam
+app.post('/api/exams', authenticateToken, async (req, res) => {
+    try {
+        const { title, subject, dueDate } = req.body;
+        const newExam = new Exam({
+            userId: req.user.id,
+            title,
+            subject,
+            dueDate
+        });
+        await newExam.save();
+        res.status(201).json(newExam);
+    } catch (err) {
+        res.status(500).json({ error: 'Failed to save exam' });
+    }
+});
+
+// Delete Exam
+app.delete('/api/exams/:id', authenticateToken, async (req, res) => {
+    try {
+        await Exam.findOneAndDelete({ _id: req.params.id, userId: req.user.id });
+        res.json({ message: 'Exam deleted successfully' });
+    } catch (err) {
+        res.status(500).json({ error: 'Failed to delete exam' });
+    }
+});
+
+// ==========================================
+// 7. PDF & NOTES HUB API ROUTES
+// ==========================================
+
+// Get Notes
+app.get('/api/notes', authenticateToken, async (req, res) => {
+    try {
+        const notes = await Note.find({ userId: req.user.id }).sort({ createdAt: -1 });
+        res.json(notes);
+    } catch (err) {
+        res.status(500).json({ error: 'Failed to fetch notes' });
+    }
+});
+
+// Save Note / PDF
+app.post('/api/notes', authenticateToken, async (req, res) => {
+    try {
+        const { title, subject, fileName, fileType, fileData, date } = req.body;
+        const newNote = new Note({
+            userId: req.user.id,
+            title,
+            subject,
+            fileName,
+            fileType,
+            fileData,
+            date
+        });
+        await newNote.save();
+        res.status(201).json(newNote);
+    } catch (err) {
+        res.status(500).json({ error: 'Failed to save note' });
+    }
+});
+
+// Delete Note
+app.delete('/api/notes/:id', authenticateToken, async (req, res) => {
+    try {
+        await Note.findOneAndDelete({ _id: req.params.id, userId: req.user.id });
+        res.json({ message: 'Note deleted successfully' });
+    } catch (err) {
+        res.status(500).json({ error: 'Failed to delete note' });
+    }
+});
+
+// ==========================================
+// 8. DATABASE CONNECTION & SERVER LISTEN
+// ==========================================
+const PORT = process.env.PORT || 5000;
+const MONGO_URI = process.env.MONGO_URI || 'your_mongodb_connection_string_here';
+
+mongoose.connect(MONGO_URI)
+    .then(() => {
+        console.log('✅ Connected to MongoDB');
+        app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
+    })
+    .catch((err) => {
+        console.error('❌ MongoDB Connection Error:', err);
     });
-  } catch (err) {
-    console.error('Login error:', err);
-    res.status(500).json({ message: 'Something went wrong while logging in.' });
-  }
-});
-
-/* =============================================================
-   TASK ROUTES (all protected by requireAuth)
-   Every route below only ever touches tasks that belong to the
-   logged-in user (req.userId), so one person can never see or
-   edit another person's tasks.
-   ============================================================= */
-
-// GET /api/tasks — returns every task belonging to the logged-in user.
-app.get('/api/tasks', requireAuth, async (req, res) => {
-  try {
-    const tasks = await Task.find({ user: req.userId }).sort({ createdAt: 1 });
-    res.json(tasks);
-  } catch (err) {
-    console.error('Get tasks error:', err);
-    res.status(500).json({ message: 'Could not fetch tasks.' });
-  }
-});
-
-// POST /api/tasks — creates a new task for the logged-in user.
-app.post('/api/tasks', requireAuth, async (req, res) => {
-  try {
-    const { title, tag, meta, status } = req.body;
-
-    if (!title) {
-      return res.status(400).json({ message: 'Task title is required.' });
-    }
-
-    const task = await Task.create({
-      user: req.userId,
-      title,
-      tag,
-      meta,
-      status: status || 'today'
-    });
-
-    res.status(201).json(task);
-  } catch (err) {
-    console.error('Create task error:', err);
-    res.status(500).json({ message: 'Could not create task.' });
-  }
-});
-
-// PUT /api/tasks/:id — updates a task (title, tag, meta, or status —
-// e.g. toggling it to "completed"). Only works on the caller's own task.
-app.put('/api/tasks/:id', requireAuth, async (req, res) => {
-  try {
-    const task = await Task.findOneAndUpdate(
-      { _id: req.params.id, user: req.userId },
-      { $set: req.body },
-      { new: true, runValidators: true }
-    );
-
-    if (!task) {
-      return res.status(404).json({ message: 'Task not found.' });
-    }
-
-    res.json(task);
-  } catch (err) {
-    console.error('Update task error:', err);
-    res.status(500).json({ message: 'Could not update task.' });
-  }
-});
-
-// DELETE /api/tasks/:id — deletes a task. Only works on the caller's own task.
-app.delete('/api/tasks/:id', requireAuth, async (req, res) => {
-  try {
-    const task = await Task.findOneAndDelete({ _id: req.params.id, user: req.userId });
-
-    if (!task) {
-      return res.status(404).json({ message: 'Task not found.' });
-    }
-
-    res.json({ message: 'Task deleted.' });
-  } catch (err) {
-    console.error('Delete task error:', err);
-    res.status(500).json({ message: 'Could not delete task.' });
-  }
-});
-
-/* =============================================================
-   START SERVER
-   ============================================================= */
-
-app.listen(PORT, () => {
-  console.log(`StudyPlanner backend running on http://localhost:${PORT}`);
-});
