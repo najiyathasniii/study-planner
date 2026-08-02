@@ -36,7 +36,10 @@ function showSection(sectionId, element) {
     }
 
     if (sectionId === 'calendar-sec' && calendar) {
-        setTimeout(() => calendar.render(), 100);
+        setTimeout(() => {
+            calendar.updateSize();
+            calendar.render();
+        }, 100);
     }
 
     if (sectionId === 'progress-sec') {
@@ -82,6 +85,8 @@ function applyTaskFilters(searchQuery = '') {
 // ==========================================
 async function fetchTasksFromBackend() {
     const token = getAuthToken();
+    if (!token) return;
+
     try {
         const response = await fetch(`${API_BASE_URL}/api/tasks`, {
             headers: { 'Authorization': `Bearer ${token}` }
@@ -102,13 +107,11 @@ async function addNewTask() {
     const input = document.getElementById('taskInput');
     const title = input ? input.value.trim() : '';
     
-    // Optional inputs: fallback to default if specific inputs don't exist in HTML
     const dateInput = document.getElementById('taskDate')?.value;
     const timeInput = document.getElementById('taskTime')?.value || '10:00';
 
     if (!title) return;
 
-    // Build standard ISO string (e.g., "2026-08-02T10:00:00")
     const selectedDate = dateInput || new Date().toISOString().split('T')[0];
     const fullDateTimeStr = `${selectedDate}T${timeInput}:00`;
 
@@ -129,6 +132,7 @@ async function addNewTask() {
 
         if (response.ok) {
             input.value = '';
+            if (input) input.blur(); // Dismiss mobile keyboard
             fetchTasksFromBackend();
         }
     } catch (error) {
@@ -227,6 +231,8 @@ function renderTaskList(taskList) {
 // ==========================================
 async function fetchExamsFromBackend() {
     const token = getAuthToken();
+    if (!token) return;
+
     try {
         const response = await fetch(`${API_BASE_URL}/api/exams`, {
             headers: { 'Authorization': `Bearer ${token}` }
@@ -305,6 +311,8 @@ async function deleteExamItem(id) {
 // ==========================================
 async function fetchNotesFromBackend() {
     const token = getAuthToken();
+    if (!token) return;
+
     try {
         const response = await fetch(`${API_BASE_URL}/api/notes`, {
             headers: { 'Authorization': `Bearer ${token}` }
@@ -494,13 +502,14 @@ function initCalendar() {
             center: 'title',
             right: 'dayGridMonth,timeGridWeek'
         },
-        editable: true,                 // Enables dragging and re-ordering
-        droppable: true,                // Enables dropping external events
-        selectable: true,               // CRITICAL: Enables clicking/selecting time slots
-        allDayMaintainDuration: false,  // Allows dragging events OUT of All-Day into hourly slots
+        editable: true,                 
+        droppable: true,                
+        selectable: true,               
+        selectLongPressDelay: 200,      // Fixes mobile browser touch taps
+        selectMirror: true,
+        allDayMaintainDuration: false,  // Allows dragging tasks out of all-day header
         defaultTimedEventDuration: '01:00:00',
 
-        // This runs when you click any time slot on the grid
         select: async function(info) {
             const title = prompt('Enter task name:');
             if (!title || !title.trim()) return;
@@ -516,7 +525,7 @@ function initCalendar() {
                     body: JSON.stringify({ 
                         title: title.trim(), 
                         completed: false, 
-                        date: info.startStr // Automatically grabs the exact clicked date/time
+                        date: info.startStr 
                     })
                 });
 
@@ -537,14 +546,13 @@ function updateCalendarEvents() {
     if (!calendar) return;
     calendar.removeAllEvents();
     tasks.forEach(task => {
-        // Detect whether the task date string includes a specific time (ISO string with 'T')
         const hasTime = task.date && task.date.includes('T');
 
         calendar.addEvent({
             id: task._id,
             title: task.title,
             start: task.date || new Date().toISOString(),
-            allDay: !hasTime, // Marks false if a time is included, automatically slotting it into specific hours
+            allDay: !hasTime, 
             color: task.completed ? '#10b981' : '#2563eb'
         });
     });
@@ -621,11 +629,39 @@ function updateCharts() {
 }
 
 // ==========================================
-// USER PROFILE & SETTINGS LOGIC
+// USER PROFILE & SETTINGS LOGIC (CROSS-DEVICE SYNC)
 // ==========================================
-function loadSavedProfile() {
-    const userName = localStorage.getItem('userName') || 'Student';
-    const userEmail = localStorage.getItem('userEmail') || '';
+async function loadSavedProfile() {
+    const token = getAuthToken();
+    let userName = localStorage.getItem('userName') || 'Student';
+    let userEmail = localStorage.getItem('userEmail') || '';
+    let savedAvatar = localStorage.getItem('userAvatar');
+
+    // Fetch fresh profile info from server to keep phone and laptop synchronized
+    if (token) {
+        try {
+            const response = await fetch(`${API_BASE_URL}/api/user/profile`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (response.ok) {
+                const data = await response.json();
+                if (data.name) {
+                    userName = data.name;
+                    localStorage.setItem('userName', data.name);
+                }
+                if (data.email) {
+                    userEmail = data.email;
+                    localStorage.setItem('userEmail', data.email);
+                }
+                if (data.avatar) {
+                    savedAvatar = data.avatar;
+                    localStorage.setItem('userAvatar', data.avatar);
+                }
+            }
+        } catch (e) {
+            console.warn('Could not fetch remote profile:', e);
+        }
+    }
 
     const headerTitle = document.querySelector('header h1');
     if (headerTitle && headerTitle.textContent.includes('Hello')) {
@@ -637,7 +673,6 @@ function loadSavedProfile() {
     if (nameInput) nameInput.value = userName;
     if (emailInput) emailInput.value = userEmail;
 
-    const savedAvatar = localStorage.getItem('userAvatar');
     if (savedAvatar) {
         const img = document.getElementById('profileImage');
         if (img) img.src = savedAvatar;
@@ -646,22 +681,54 @@ function loadSavedProfile() {
 
 function handleAvatarUpload(event) {
     const file = event.target.files[0];
-    if (file) {
-        if (file.size > 2 * 1024 * 1024) {
-            alert('Image size exceeds 2MB limit!');
-            return;
-        }
+    if (!file) return;
 
-        const reader = new FileReader();
-        reader.onload = function (e) {
-            const avatarBase64 = e.target.result;
-            const img = document.getElementById('profileImage');
-            if (img) img.src = avatarBase64;
-            localStorage.setItem('userAvatar', avatarBase64);
-            alert('Profile picture updated!');
+    const reader = new FileReader();
+    reader.onload = function (e) {
+        const img = new Image();
+        img.onload = async function () {
+            // Compress image for fast mobile uploading and network transfer
+            const canvas = document.createElement('canvas');
+            const MAX_WIDTH = 250;
+            const scaleFactor = MAX_WIDTH / img.width;
+            
+            canvas.width = MAX_WIDTH;
+            canvas.height = img.height * scaleFactor;
+
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+            const compressedBase64 = canvas.toDataURL('image/jpeg', 0.7);
+
+            // 1. Update DOM & LocalStorage
+            const profileImg = document.getElementById('profileImage');
+            if (profileImg) profileImg.src = compressedBase64;
+            localStorage.setItem('userAvatar', compressedBase64);
+
+            // 2. Sync avatar to backend so it displays across all devices
+            const token = getAuthToken();
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/user/profile`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ avatar: compressedBase64 })
+                });
+
+                if (response.ok) {
+                    alert('Profile picture updated across all devices!');
+                } else {
+                    alert('Profile picture saved locally.');
+                }
+            } catch (err) {
+                console.error('Error uploading avatar:', err);
+            }
         };
-        reader.readAsDataURL(file);
-    }
+        img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
 }
 
 async function saveProfile() {
@@ -674,7 +741,6 @@ async function saveProfile() {
     }
 
     localStorage.setItem('userName', name);
-    loadSavedProfile();
 
     const token = getAuthToken();
     try {
@@ -689,12 +755,10 @@ async function saveProfile() {
 
         if (response.ok) {
             alert('Profile details saved!');
-        } else {
-            alert('Profile details saved!');
+            loadSavedProfile();
         }
     } catch (err) {
-        console.warn('Backend update failed; saved to local browser storage.');
-        alert('Profile details saved!');
+        console.warn('Backend update failed; saved locally.');
     }
 }
 
@@ -737,19 +801,16 @@ async function changePassword() {
             document.getElementById('newPassword').value = '';
             document.getElementById('confirmPassword').value = '';
         } else {
-            alert(data.error || data.message || 'Failed to change password. Please check your current password.');
+            alert(data.error || data.message || 'Failed to change password.');
         }
     } catch (error) {
         console.error('Password change error:', error);
-        alert('Unable to connect to the server. Please try again later.');
+        alert('Unable to connect to the server.');
     }
 }
 
 function logoutUser() {
-    localStorage.removeItem('token');
-    localStorage.removeItem('userName');
-    localStorage.removeItem('userEmail');
-    localStorage.removeItem('userAvatar');
+    localStorage.clear();
     window.location.href = 'login.html';
 }
 
@@ -828,7 +889,7 @@ function initAuthForms() {
 }
 
 // ==========================================
-// POMODORO TIMER LOGIC
+// POMODORO TIMER & ALARM NOTIFICATION LOGIC
 // ==========================================
 let pomoInterval = null;
 let pomoSecondsLeft = 25 * 60;
@@ -859,6 +920,12 @@ function setTimerMode(minutes, buttonEl) {
 
 function startPomodoro() {
     if (isPomoRunning) return;
+
+    // Request notification permission on start
+    if ("Notification" in window && Notification.permission === "default") {
+        Notification.requestPermission();
+    }
+
     isPomoRunning = true;
 
     pomoInterval = setInterval(() => {
@@ -868,6 +935,14 @@ function startPomodoro() {
         } else {
             clearInterval(pomoInterval);
             isPomoRunning = false;
+            
+            // 1. Play Web Audio Chime Sound
+            playAlarmSound();
+
+            // 2. Trigger System Push Notification
+            triggerNotification('Pomodoro Timer Complete! 🎉', 'Time is up! Take a quick break or start your next focus session.');
+
+            // 3. Display Browser Alert Backup
             alert('🎉 Time is up! Take a break or start another focus session.');
             resetPomodoro();
         }
@@ -885,8 +960,44 @@ function resetPomodoro() {
     updateTimerDisplay();
 }
 
+// Web Audio API Synthesizer Sound (No external file needed)
+function playAlarmSound() {
+    try {
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const playBeep = (freq, startTime, duration) => {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(freq, startTime);
+            gain.gain.setValueAtTime(0.3, startTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, startTime + duration);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start(startTime);
+            osc.stop(startTime + duration);
+        };
+
+        const now = audioCtx.currentTime;
+        playBeep(587.33, now, 0.2);        // D5 note
+        playBeep(880, now + 0.25, 0.2);    // A5 note
+        playBeep(1174.66, now + 0.5, 0.4);  // D6 note
+    } catch (e) {
+        console.error('Audio playback error:', e);
+    }
+}
+
+// Triggers system popup notification on mobile and desktop OS
+function triggerNotification(title, body) {
+    if ("Notification" in window && Notification.permission === "granted") {
+        new Notification(title, {
+            body: body,
+            icon: 'https://cdn-icons-png.flaticon.com/512/3208/3208726.png'
+        });
+    }
+}
+
 // ==========================================
-// INITIALIZE ON PAGE LOAD
+// INITIALIZE & AUTO-SYNC LISTENERS
 // ==========================================
 document.addEventListener('DOMContentLoaded', () => {
     const token = getAuthToken();
@@ -930,3 +1041,20 @@ document.addEventListener('DOMContentLoaded', () => {
         initAuthForms();
     }
 });
+
+// Auto-Sync Data whenever switching back to the app tab
+window.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible' && getAuthToken()) {
+        fetchTasksFromBackend();
+        fetchExamsFromBackend();
+        loadSavedProfile();
+    }
+});
+
+// Real-Time Background Auto-Syncing Every 15 Seconds across phone & laptop
+setInterval(() => {
+    if (getAuthToken() && document.visibilityState === 'visible') {
+        fetchTasksFromBackend();
+        fetchExamsFromBackend();
+    }
+}, 15000);
