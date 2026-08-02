@@ -132,21 +132,20 @@ progress {
     color: #64748b;
 }
 
-/* Task Management Input Elements */
-#searchTask, .add-task input {
-    width: 100%;
+/* Base Add Task Styles */
+.add-task {
+    display: flex;
+    gap: 12px;
+    margin: 20px 0;
+}
+
+.add-task input, .add-task select {
     padding: 12px 15px;
     border: 1px solid #cbd5e1;
     border-radius: 10px;
     outline: none;
     font-size: 14px;
     background: white;
-}
-
-.add-task {
-    display: flex;
-    gap: 12px;
-    margin: 20px 0;
 }
 
 .add-task button {
@@ -165,46 +164,197 @@ progress {
     background-color: #1d4ed8;
 }
 
-/* Dynamic Task Items */
-.task-item {
-    background: white;
-    padding: 15px 20px;
-    border-radius: 12px;
+/* ==========================================
+   ENHANCED TASKS PAGE STYLES
+   ========================================== */
+
+.tasks-layout {
+    display: grid;
+    grid-template-columns: 2.8fr 1fr;
+    gap: 25px;
+    margin-top: 10px;
+}
+
+@media (max-width: 990px) {
+    .tasks-layout {
+        grid-template-columns: 1fr;
+    }
+}
+
+.add-task-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    padding: 16px;
+    border-radius: 14px;
+    margin-bottom: 20px;
     display: flex;
-    align-items: center;
-    justify-content: space-between;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-    margin-bottom: 10px;
+    gap: 12px;
+    flex-wrap: wrap;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
 }
 
-.task-item.completed span {
-    text-decoration: line-through;
-    color: #94a3b8;
-}
-
-.task-actions {
+.add-task-inputs {
     display: flex;
-    gap: 8px;
+    gap: 10px;
+    flex: 1;
+    min-width: 280px;
 }
 
-.btn-icon {
+.add-task-inputs input,
+.add-task-inputs select {
+    padding: 11px 14px;
+    border: 1px solid #cbd5e1;
+    border-radius: 10px;
+    outline: none;
+    font-size: 14px;
+    background: #ffffff;
+    transition: all 0.2s;
+}
+
+.add-task-inputs input:focus,
+.add-task-inputs select:focus {
+    border-color: #2563eb;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+}
+
+.btn-add-task {
+    background: #2563eb;
+    color: white;
     border: none;
-    padding: 8px 12px;
+    padding: 11px 22px;
+    border-radius: 10px;
+    font-weight: 500;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: 0.2s ease;
+}
+
+.btn-add-task:hover {
+    background: #1d4ed8;
+    transform: translateY(-1px);
+}
+
+.task-controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 18px;
+    flex-wrap: wrap;
+}
+
+.search-box-wrapper {
+    position: relative;
+    flex: 1;
+    min-width: 220px;
+}
+
+.search-box-wrapper .search-icon {
+    position: absolute;
+    left: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #94a3b8;
+    font-size: 14px;
+}
+
+.search-box-wrapper input {
+    width: 100%;
+    padding: 10px 14px 10px 38px;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    outline: none;
+    font-size: 14px;
+    background: #ffffff;
+}
+
+.search-box-wrapper input:focus {
+    border-color: #2563eb;
+}
+
+.task-filter-pills {
+    display: flex;
+    gap: 4px;
+    background: #e2e8f0;
+    padding: 4px;
+    border-radius: 10px;
+}
+
+.filter-pill {
+    background: transparent;
+    border: none;
+    padding: 6px 14px;
     border-radius: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    color: #64748b;
     cursor: pointer;
     transition: 0.2s;
 }
 
-.btn-delete {
-    background: #fee2e2;
-    color: #ef4444;
+.filter-pill.active {
+    background: #ffffff;
+    color: #2563eb;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.06);
 }
 
-.btn-delete:hover {
-    background: #fca5a5;
+.task-card-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 18px;
+    background: #ffffff;
+    margin-bottom: 10px;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.02);
+    transition: all 0.2s ease;
 }
 
-/* Calendar Card Container */
+.task-card-item:hover {
+    border-color: #cbd5e1;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.04);
+}
+
+.task-card-item.completed {
+    background: #f8fafc;
+    border-color: #f1f5f9;
+}
+
+.task-summary-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    padding: 20px;
+    border-radius: 16px;
+    position: sticky;
+    top: 20px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+}
+
+.task-summary-card h3 {
+    font-size: 16px;
+    color: #1e293b;
+    margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.summary-metric {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    font-size: 14px;
+    color: #64748b;
+}
+
+.summary-metric strong {
+    font-size: 16px;
+    color: #0f172a;
+}
+
+/* Calendar Container */
 .calendar-card {
     background: white;
     padding: 25px;
@@ -227,7 +377,7 @@ progress {
     background-color: #eff6ff !important;
 }
 
-/* Analytics & Chart Section */
+/* Analytics Grid */
 .analytics-grid {
     display: grid;
     grid-template-columns: 2fr 1fr;
@@ -253,7 +403,8 @@ progress {
         grid-template-columns: 1fr;
     }
 }
-/* Settings Layout */
+
+/* Settings Controls */
 .settings-container {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
@@ -276,7 +427,6 @@ progress {
     padding-bottom: 10px;
 }
 
-/* Avatar Preview */
 .profile-upload-group {
     display: flex;
     align-items: center;
@@ -311,7 +461,6 @@ progress {
     background: #dbeafe;
 }
 
-/* Settings Form Controls */
 .settings-form {
     display: flex;
     flex-direction: column;
@@ -357,10 +506,11 @@ progress {
 .btn-primary-sm:hover {
     background: #1d4ed8;
 }
+
 .chart-container {
     position: relative;
     width: 100%;
-    height: 280px; /* Locks chart height */
+    height: 280px;
 }
 
 .chart-container canvas {
