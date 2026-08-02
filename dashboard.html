@@ -42,6 +42,11 @@
                 </a>
             </li>
             <li>
+                <a href="#" class="nav-link" onclick="showSection('notes-sec', this)">
+                    <i class="fa-solid fa-sticky-note"></i> Quick Notes
+                </a>
+            </li>
+            <li>
                 <a href="#" class="nav-link" onclick="showSection('calendar-sec', this)">
                     <i class="fa-solid fa-calendar"></i> Calendar
                 </a>
@@ -160,7 +165,32 @@
             </div>
         </section>
 
-        <!-- 4. INTERACTIVE CALENDAR TAB -->
+        <!-- 4. SUBJECT-WISE QUICK NOTES TAB -->
+        <section id="notes-sec" class="tab-content">
+            <header>
+                <h1>Quick Notes Hub 📝</h1>
+                <p>Organize your study notes, formulas, and quick reminders by subject.</p>
+            </header>
+
+            <div class="card" style="margin-top: 20px; padding: 20px;">
+                <h3>Create New Note</h3>
+                
+                <div style="display: flex; gap: 10px; margin-top: 15px; flex-wrap: wrap;">
+                    <input type="text" id="noteTitle" placeholder="Note Title (e.g., Quantum Mechanics Formulas)" style="flex: 2; min-width: 200px; padding: 10px; border: 1px solid #ddd; border-radius: 6px;">
+                    <input type="text" id="noteSubject" placeholder="Subject (e.g., Physics)" style="flex: 1; min-width: 130px; padding: 10px; border: 1px solid #ddd; border-radius: 6px;">
+                    <button onclick="addQuickNote()" style="background: #2563eb; color: white; border: none; padding: 10px 18px; border-radius: 6px; cursor: pointer; font-weight: 600;">Save Note</button>
+                </div>
+
+                <textarea id="noteContent" rows="4" placeholder="Write your note, revision points, or key concepts here..." style="width: 100%; margin-top: 10px; padding: 10px; border: 1px solid #ddd; border-radius: 6px; font-family: inherit; resize: vertical;"></textarea>
+            </div>
+
+            <!-- Notes Grid Container -->
+            <div id="notesGrid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 15px; margin-top: 20px;">
+                <!-- Dynamic note cards injected here -->
+            </div>
+        </section>
+
+        <!-- 5. INTERACTIVE CALENDAR TAB -->
         <section id="calendar-sec" class="tab-content">
             <header>
                 <h1>Study Schedule Calendar 📅</h1>
@@ -172,7 +202,7 @@
             </div>
         </section>
 
-        <!-- 5. ANALYTICS & PROGRESS TAB -->
+        <!-- 6. ANALYTICS & PROGRESS TAB -->
         <section id="progress-sec" class="tab-content">
             <header>
                 <h1>Performance Analytics 📈</h1>
@@ -211,7 +241,7 @@
             </div>
         </section>
 
-        <!-- 6. SETTINGS TAB -->
+        <!-- 7. SETTINGS TAB -->
         <section id="settings-sec" class="tab-content">
             <header>
                 <h1>Account Settings ⚙️</h1>
