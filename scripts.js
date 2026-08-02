@@ -226,6 +226,78 @@ function renderTaskList(taskList) {
 }
 
 // ==========================================
+// EXAMS & ASSIGNMENTS (BACKEND API)
+// ==========================================
+async function fetchExamsFromBackend() {
+    const token = getAuthToken();
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/exams`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (response.ok) {
+            examItems = await response.json();
+            renderExams();
+        }
+    } catch (error) {
+        console.error('Error fetching exams:', error);
+    }
+}
+
+async function addNewExam() {
+    // Looks for inputs by ID or relative form inputs
+    const titleInput = document.getElementById('examTitle') || document.querySelector('.add-exam-form input[type="text"]:nth-of-type(1)');
+    const subjectInput = document.getElementById('examSubject') || document.querySelector('.add-exam-form input[type="text"]:nth-of-type(2)');
+    const dateInput = document.getElementById('examDate') || document.querySelector('.add-exam-form input[type="date"]');
+
+    const title = titleInput ? titleInput.value.trim() : '';
+    const subject = subjectInput ? subjectInput.value.trim() : 'General';
+    const dueDate = dateInput ? dateInput.value : '';
+
+    if (!title || !dueDate) {
+        alert('Please fill in both the Title and the Due Date!');
+        return;
+    }
+
+    const token = getAuthToken();
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/exams`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({ title, subject, dueDate })
+        });
+
+        if (response.ok) {
+            if (titleInput) titleInput.value = '';
+            if (subjectInput) subjectInput.value = '';
+            if (dateInput) dateInput.value = '';
+            fetchExamsFromBackend();
+        } else {
+            const errData = await response.json();
+            alert(errData.error || 'Failed to add exam item.');
+        }
+    } catch (error) {
+        console.error('Error adding exam:', error);
+        alert('Unable to connect to server.');
+    }
+}
+
+async function deleteExamItem(id) {
+    const token = getAuthToken();
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/exams/${id}`, {
+            method: 'DELETE',
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (response.ok) fetchExamsFromBackend();
+    } catch (error) {
+        console.error('Error deleting exam:', error);
+    }
+}
+
+// ==========================================
 // PDF & NOTES HUB (BACKEND API)
 // ==========================================
 async function fetchNotesFromBackend() {
@@ -257,7 +329,7 @@ async function addPdfNote() {
     const subject = document.getElementById('noteSubject')?.value.trim() || 'General';
 
     if (!title || !currentSelectedFile) {
-        alert('Please enter a title AND select a file to upload!');
+        alert('Please enter a title AND select a PDF file to upload!');
         return;
     }
 
@@ -284,15 +356,19 @@ async function addPdfNote() {
             });
 
             if (response.ok) {
-                document.getElementById('noteTitle').value = '';
-                document.getElementById('noteSubject').value = '';
-                document.getElementById('noteFileInput').value = '';
-                document.getElementById('selectedFileName').textContent = '';
+                if (document.getElementById('noteTitle')) document.getElementById('noteTitle').value = '';
+                if (document.getElementById('noteSubject')) document.getElementById('noteSubject').value = '';
+                if (document.getElementById('noteFileInput')) document.getElementById('noteFileInput').value = '';
+                if (document.getElementById('selectedFileName')) document.getElementById('selectedFileName').textContent = '';
                 currentSelectedFile = null;
                 fetchNotesFromBackend();
+            } else {
+                const errData = await response.json();
+                alert(errData.error || 'Failed to upload PDF. File size may be too large.');
             }
         } catch (error) {
             console.error('Error uploading note:', error);
+            alert('Server error occurred during PDF upload.');
         }
     };
 
@@ -343,7 +419,7 @@ function renderExams() {
         const card = document.createElement('div');
         card.style.cssText = `
             display: flex; justify-content: space-between; align-items: center; 
-            padding: 12px 16px; background: #f9fafb; border-radius: 8px; border-left: 4px solid ${badge.color};
+            padding: 12px 16px; background: #f9fafb; border-radius: 8px; border-left: 4px solid ${badge.color}; margin-bottom: 8px;
         `;
         card.innerHTML = `
             <div>
@@ -682,6 +758,12 @@ document.addEventListener('DOMContentLoaded', () => {
     if (token && (isLoginPage || isRegisterPage || isForgotPasswordPage)) {
         window.location.href = 'dashboard.html';
         return;
+    }
+
+    // Attach File Input Listener for PDF Uploads
+    const fileInput = document.getElementById('noteFileInput');
+    if (fileInput) {
+        fileInput.addEventListener('change', handleFileSelect);
     }
 
     // If on Dashboard with valid auth token, load app state
