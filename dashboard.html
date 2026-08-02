@@ -4,27 +4,23 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Study Planner Dashboard</title>
-
-    <link rel="stylesheet" href="dashboard.css">
-
-    <!-- Google Fonts & FontAwesome -->
+    
+    <!-- Google Fonts & Font Awesome Icons -->
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
-
-    <!-- FullCalendar Library for Interactive Schedule -->
-    <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js'></script>
-
-    <!-- Chart.js Library for Performance Analytics -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- FullCalendar CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css" rel="stylesheet">
+    
+    <!-- Your Provided Stylesheet -->
+    <link rel="stylesheet" href="dashboard.css">
 </head>
-
 <body>
 
 <div class="dashboard">
-
-    <!-- Sidebar Navigation -->
+    <!-- ================= SIDEBAR ================= -->
     <aside class="sidebar">
-        <h2>📚 Study Planner</h2>
+        <h2><i class="fa-solid fa-graduation-cap"></i> StudyPlanner</h2>
         <ul>
             <li>
                 <a href="#" class="nav-link active" onclick="showSection('dashboard-sec', this)">
@@ -38,22 +34,22 @@
             </li>
             <li>
                 <a href="#" class="nav-link" onclick="showSection('exams-sec', this)">
-                    <i class="fa-solid fa-pen-to-square"></i> Exams & Assignments
+                    <i class="fa-solid fa-pen-to-square"></i> Exams & Due Dates
                 </a>
             </li>
             <li>
                 <a href="#" class="nav-link" onclick="showSection('notes-sec', this)">
-                    <i class="fa-solid fa-file-pdf"></i> PDF & Notes Hub
+                    <i class="fa-solid fa-file-pdf"></i> PDF & Notes
                 </a>
             </li>
             <li>
                 <a href="#" class="nav-link" onclick="showSection('calendar-sec', this)">
-                    <i class="fa-solid fa-calendar"></i> Calendar
+                    <i class="fa-solid fa-calendar-days"></i> Schedule
                 </a>
             </li>
             <li>
                 <a href="#" class="nav-link" onclick="showSection('progress-sec', this)">
-                    <i class="fa-solid fa-chart-line"></i> Progress
+                    <i class="fa-solid fa-chart-line"></i> Analytics
                 </a>
             </li>
             <li>
@@ -61,258 +57,212 @@
                     <i class="fa-solid fa-gear"></i> Settings
                 </a>
             </li>
-            <li>
-                <a href="index.html" onclick="logoutUser()">
+            <li style="margin-top: 30px;">
+                <a href="#" onclick="logoutUser()" style="color: #fca5a5;">
                     <i class="fa-solid fa-right-from-bracket"></i> Logout
                 </a>
             </li>
         </ul>
     </aside>
 
-    <!-- Main Content Panel -->
+    <!-- ================= MAIN CONTENT ================= -->
     <main class="main-content">
 
-        <!-- 1. DASHBOARD OVERVIEW TAB -->
+        <!-- 1. DASHBOARD TAB -->
         <section id="dashboard-sec" class="tab-content active-tab">
             <header>
-                <h1>Hello 👋</h1>
-                <p>Stay productive today.</p>
+                <h1>Hello, Student 👋</h1>
+                <p>Here is an overview of your academic progress.</p>
             </header>
 
-            <!-- Stats Summary Cards -->
+            <!-- STAT CARDS -->
             <div class="stats">
                 <div class="card">
-                    <h3>Total Tasks</h3>
+                    <h3>TOTAL TASKS</h3>
                     <h2 id="totalTasks">0</h2>
                 </div>
                 <div class="card">
-                    <h3>Completed</h3>
-                    <h2 id="completedTasks">0</h2>
+                    <h3>COMPLETED</h3>
+                    <h2 id="completedTasks" style="color: #10b981;">0</h2>
                 </div>
                 <div class="card">
-                    <h3>Pending</h3>
-                    <h2 id="pendingTasks">0</h2>
+                    <h3>PENDING</h3>
+                    <h2 id="pendingTasks" style="color: #f59e0b;">0</h2>
                 </div>
             </div>
 
-            <!-- Progress Meter -->
+            <!-- PROGRESS SECTION -->
             <div class="progress-section">
-                <h2>Today's Progress</h2>
+                <h2>Overall Progress</h2>
                 <progress id="progressBar" value="0" max="100"></progress>
                 <p id="progressText">0% Completed</p>
             </div>
-
-            <!-- Pomodoro Focus Timer Widget -->
-            <div class="card" style="margin-top: 20px; text-align: center;">
-                <h3>⏱️ Pomodoro Focus Timer</h3>
-                <p style="color: #666; font-size: 14px; margin-top: 4px;">Stay focused for 25 minutes, then take a 5-minute break!</p>
-                
-                <div id="timer-display" style="font-size: 42px; font-weight: bold; color: #2563eb; margin: 15px 0;">
-                    25:00
-                </div>
-
-                <div style="display: flex; gap: 10px; justify-content: center;">
-                    <button id="start-btn" style="background: #2563eb; color: white; border: none; padding: 8px 18px; border-radius: 6px; cursor: pointer; font-weight: 600;">Start</button>
-                    <button id="pause-btn" style="background: #e5e7eb; color: #374151; border: none; padding: 8px 18px; border-radius: 6px; cursor: pointer; font-weight: 600;">Pause</button>
-                    <button id="reset-btn" style="background: #fee2e2; color: #dc2626; border: none; padding: 8px 18px; border-radius: 6px; cursor: pointer; font-weight: 600;">Reset</button>
-                </div>
-            </div>
         </section>
 
-        <!-- 2. FULL TASKS MANAGEMENT TAB -->
+        <!-- 2. TASKS TAB -->
         <section id="tasks-sec" class="tab-content">
             <header>
-                <h1>My Study Tasks 📋</h1>
-                <p>Add, search, and check off your daily study goals.</p>
+                <h1>My Study Tasks</h1>
+                <p>Organize, search, and manage your daily study list.</p>
             </header>
 
-            <!-- Search Bar -->
-            <input type="text" id="searchTask" placeholder="Search Task..." style="margin-top: 20px;">
-
-            <!-- Add Task Controls -->
             <div class="add-task">
-                <input type="text" id="taskInput" placeholder="Enter new task">
-                <button id="addTaskBtn" onclick="addNewTask()">Add Task</button>
+                <input type="text" id="taskInput" placeholder="Add a new task (e.g., Read Chapter 4 Math)...">
+                <button onclick="addNewTask()"><i class="fa-solid fa-plus"></i> Add Task</button>
             </div>
 
-            <!-- Task List Display Container -->
-            <div id="taskList"></div>
+            <div style="margin-bottom: 20px;">
+                <input type="text" id="searchTask" placeholder="🔍 Search tasks...">
+            </div>
+
+            <div id="taskList">
+                <!-- Dynamically populated by scripts.js -->
+            </div>
         </section>
 
-        <!-- 3. EXAMS & ASSIGNMENTS TRACKER TAB -->
+        <!-- 3. EXAMS & DUE DATES TAB -->
         <section id="exams-sec" class="tab-content">
             <header>
-                <h1>Exams & Assignments Tracker 📝</h1>
-                <p>Keep track of test dates, project submissions, and crucial deadlines.</p>
+                <h1>Exams & Assignments</h1>
+                <p>Track your test dates and project deadlines.</p>
             </header>
 
-            <div class="card" style="margin-top: 20px; padding: 20px;">
-                <h3>Add New Deadline</h3>
-                <p style="color: #666; font-size: 14px; margin-bottom: 15px;">Fill in the details below to track upcoming exams or assignments.</p>
-
-                <!-- Input Controls -->
-                <div style="display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap;">
-                    <input type="text" id="examTitleInput" placeholder="Title (e.g., Physics Midterm)" style="flex: 2; min-width: 200px; padding: 10px 12px; border: 1px solid #ddd; border-radius: 6px;">
-                    <input type="text" id="examSubjectInput" placeholder="Subject (e.g., Physics)" style="flex: 1; min-width: 130px; padding: 10px 12px; border: 1px solid #ddd; border-radius: 6px;">
-                    <input type="date" id="examDateInput" style="padding: 10px 12px; border: 1px solid #ddd; border-radius: 6px;">
-                    <button onclick="addExamTrackerItem()" style="background: #2563eb; color: white; border: none; padding: 10px 18px; border-radius: 6px; cursor: pointer; font-weight: 600;">Add Deadline</button>
+            <div class="settings-card" style="margin-top: 20px;">
+                <h3>Add Exam / Deadline</h3>
+                <div class="add-task" style="flex-wrap: wrap;">
+                    <input type="text" id="examTitleInput" placeholder="Exam Title (e.g., Physics Midterm)" style="flex: 2;">
+                    <input type="text" id="examSubjectInput" placeholder="Subject (e.g., Physics)" style="flex: 1;">
+                    <input type="date" id="examDateInput" style="flex: 1;">
+                    <button onclick="addExamTrackerItem()"><i class="fa-solid fa-plus"></i> Add Item</button>
                 </div>
+            </div>
 
-                <!-- Exam List Container -->
-                <div id="examTrackerList" style="display: flex; flex-direction: column; gap: 10px; margin-top: 15px;">
-                    <!-- Items dynamically injected here via JS -->
-                </div>
+            <div id="examTrackerList" style="display: flex; flex-direction: column; gap: 12px; margin-top: 20px;">
+                <!-- Dynamically populated by scripts.js -->
             </div>
         </section>
 
-        <!-- 4. SUBJECT-WISE PDF & FILE NOTES TAB -->
+        <!-- 4. PDF & NOTES HUB TAB -->
         <section id="notes-sec" class="tab-content">
             <header>
-                <h1>PDF & Study Material Hub 📄</h1>
-                <p>Upload, organize, and access your subject lecture slides and PDF notes.</p>
+                <h1>PDF & Study Materials Hub</h1>
+                <p>Store and view your study reference materials.</p>
             </header>
 
-            <div class="card" style="margin-top: 20px; padding: 20px;">
-                <h3>Upload Study Material / PDF</h3>
-                
-                <div style="display: flex; gap: 10px; margin-top: 15px; flex-wrap: wrap; align-items: center;">
-                    <input type="text" id="noteTitle" placeholder="Title (e.g., Chapter 3 Lecture Slides)" style="flex: 2; min-width: 200px; padding: 10px; border: 1px solid #ddd; border-radius: 6px;">
-                    <input type="text" id="noteSubject" placeholder="Subject (e.g., Chemistry)" style="flex: 1; min-width: 130px; padding: 10px; border: 1px solid #ddd; border-radius: 6px;">
-                    
-                    <input type="file" id="noteFileInput" accept=".pdf, .doc, .docx, .ppt, .pptx, image/*" style="display: none;" onchange="handleFileSelect(event)">
-                    
-                    <label for="noteFileInput" style="padding: 10px 14px; background: #e5e7eb; color: #374151; border-radius: 6px; cursor: pointer; font-weight: 500;">
-                        <i class="fa-solid fa-paperclip"></i> Choose File
-                    </label>
-
-                    <button onclick="addPdfNote()" style="background: #2563eb; color: white; border: none; padding: 10px 18px; border-radius: 6px; cursor: pointer; font-weight: 600;">Upload & Save</button>
+            <div class="settings-card" style="margin-top: 20px;">
+                <h3>Upload Notes / PDF</h3>
+                <div class="settings-form">
+                    <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+                        <input type="text" id="noteTitle" placeholder="Title (e.g., Organic Chem Summary)" style="flex: 1; padding: 10px; border: 1px solid #cbd5e1; border-radius: 8px;">
+                        <input type="text" id="noteSubject" placeholder="Subject" style="flex: 1; padding: 10px; border: 1px solid #cbd5e1; border-radius: 8px;">
+                    </div>
+                    <div class="profile-upload-group" style="margin-bottom: 0;">
+                        <label for="noteFileInput" class="btn-secondary" style="margin: 0;">
+                            <i class="fa-solid fa-file-arrow-up"></i> Choose File
+                        </label>
+                        <input type="file" id="noteFileInput" accept=".pdf,image/*" onchange="handleFileSelect(event)">
+                        <span id="selectedFileName" style="font-size: 13px; color: #64748b;"></span>
+                    </div>
+                    <button class="btn-primary-sm" onclick="addPdfNote()"><i class="fa-solid fa-upload"></i> Upload Material</button>
                 </div>
-
-                <span id="selectedFileName" style="display: block; font-size: 13px; color: #2563eb; margin-top: 8px; font-weight: 500;"></span>
             </div>
 
-            <!-- Uploaded Documents Grid Container -->
-            <div id="notesGrid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 15px; margin-top: 20px;">
-                <!-- Dynamic PDF cards injected here -->
+            <div id="notesGrid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; margin-top: 25px;">
+                <!-- Dynamically populated by scripts.js -->
             </div>
         </section>
 
-        <!-- 5. INTERACTIVE CALENDAR TAB -->
+        <!-- 5. SCHEDULE / CALENDAR TAB -->
         <section id="calendar-sec" class="tab-content">
             <header>
-                <h1>Study Schedule Calendar 📅</h1>
-                <p>Navigate months/years and click on any date to schedule a deadline or task.</p>
+                <h1>Study Schedule</h1>
+                <p>View your scheduled tasks in a monthly calendar view.</p>
             </header>
-
             <div class="calendar-card">
                 <div id="calendar"></div>
             </div>
         </section>
 
-        <!-- 6. ANALYTICS & PROGRESS TAB -->
+        <!-- 6. ANALYTICS / PROGRESS TAB -->
         <section id="progress-sec" class="tab-content">
             <header>
-                <h1>Performance Analytics 📈</h1>
-                <p>Track your study habits, completion rates, and weekly productivity trends.</p>
+                <h1>Performance Analytics</h1>
+                <p>Analyze completed tasks and monitor study consistency.</p>
             </header>
 
-            <!-- Overview Metrics Grid -->
-            <div class="stats" style="margin-top: 20px;">
+            <div class="stats">
                 <div class="card">
-                    <h3>Completion Rate</h3>
-                    <h2 id="analyticsRate" style="color: #10b981;">0%</h2>
+                    <h3>COMPLETION RATE</h3>
+                    <h2 id="analyticsRate" style="color: #2563eb;">0%</h2>
                 </div>
                 <div class="card">
-                    <h3>Study Streak</h3>
-                    <h2 style="color: #f59e0b;">🔥 5 Days</h2>
+                    <h3>COMPLETED TASKS</h3>
+                    <h2 id="analyticsCompleted" style="color: #10b981;">0</h2>
                 </div>
                 <div class="card">
-                    <h3>Tasks Completed</h3>
-                    <h2 id="analyticsCompleted" style="color: #2563eb;">0</h2>
+                    <h3>PENDING TASKS</h3>
+                    <h2 id="analyticsPending" style="color: #f59e0b;">0</h2>
                 </div>
             </div>
 
-            <!-- Charts Container Grid -->
-           <!-- Charts Container Grid -->
-<div class="analytics-grid">
-    <!-- Chart 1: Weekly Progress Bar Chart -->
-    <div class="chart-card">
-        <h3>Weekly Productivity Overview</h3>
-        <div class="chart-container">
-            <canvas id="weeklyChart"></canvas>
-        </div>
-    </div>
+            <div class="analytics-grid">
+                <!-- Bar Chart Wrapper -->
+                <div class="chart-card">
+                    <h3>Weekly Task Activity (Mon - Sun)</h3>
+                    <div class="chart-container">
+                        <canvas id="weeklyChart"></canvas>
+                    </div>
+                </div>
 
-    <!-- Chart 2: Task Distribution Doughnut Chart -->
-    <div class="chart-card">
-        <h3>Task Status Breakdown</h3>
-        <div class="chart-container">
-            <canvas id="statusChart"></canvas>
-        </div>
-    </div>
-</div>
+                <!-- Doughnut Chart Wrapper -->
+                <div class="chart-card">
+                    <h3>Task Breakdown</h3>
+                    <div class="chart-container">
+                        <canvas id="statusChart"></canvas>
+                    </div>
+                </div>
+            </div>
         </section>
 
         <!-- 7. SETTINGS TAB -->
         <section id="settings-sec" class="tab-content">
             <header>
-                <h1>Account Settings ⚙️</h1>
-                <p>Manage your profile, updates, and security preferences.</p>
+                <h1>Settings</h1>
+                <p>Update your personal information and application preferences.</p>
             </header>
 
             <div class="settings-container">
-                
-                <!-- Profile Picture & Information -->
                 <div class="settings-card">
-                    <h3>Profile Settings</h3>
+                    <h3>Profile Details</h3>
                     <div class="profile-upload-group">
                         <div class="avatar-preview">
-                            <img id="profileImage" src="https://ui-avatars.com/api/?name=User&background=3b82f6&color=fff" alt="Profile Picture">
-                        </div>
-                        <div class="upload-btn-wrapper">
-                            <label for="avatarInput" class="btn-secondary">Change Photo</label>
-                            <input type="file" id="avatarInput" accept="image/*" onchange="previewImage(event)">
+                            <img id="profileImage" src="https://via.placeholder.com/80" alt="Avatar">
                         </div>
                     </div>
-
-                    <form onsubmit="saveProfile(event)" class="settings-form">
+                    <div class="settings-form">
                         <div class="input-group">
-                            <label>Full Name</label>
-                            <input type="text" id="settingName" placeholder="Enter full name">
+                            <label for="settingName">Full Name</label>
+                            <input type="text" id="settingName" placeholder="John Doe">
                         </div>
                         <div class="input-group">
-                            <label>Email Address</label>
-                            <input type="email" id="settingEmail" placeholder="Enter email address">
+                            <label for="settingEmail">Email Address</label>
+                            <input type="email" id="settingEmail" placeholder="john@example.com" disabled style="background: #f1f5f9; cursor: not-allowed;">
                         </div>
-                        <button type="submit" class="btn-primary-sm">Save Changes</button>
-                    </form>
+                    </div>
                 </div>
-
-                <!-- Password Change Section -->
-                <div class="settings-card">
-                    <h3>Security</h3>
-                    <form onsubmit="changePassword(event)" class="settings-form">
-                        <div class="input-group">
-                            <label>Current Password</label>
-                            <input type="password" id="currentPass" placeholder="••••••••" required>
-                        </div>
-                        <div class="input-group">
-                            <label>New Password</label>
-                            <input type="password" id="newPass" placeholder="••••••••" required>
-                        </div>
-                        <div class="input-group">
-                            <label>Confirm New Password</label>
-                            <input type="password" id="confirmPass" placeholder="••••••••" required>
-                        </div>
-                        <button type="submit" class="btn-primary-sm">Update Password</button>
-                    </form>
-                </div>
-
             </div>
         </section>
+
     </main>
 </div>
 
+<!-- ================= EXTERNAL LIBRARIES ================= -->
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<!-- FullCalendar.js -->
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js"></script>
+<!-- Main JavaScript Logic -->
 <script src="scripts.js"></script>
+
 </body>
 </html>
