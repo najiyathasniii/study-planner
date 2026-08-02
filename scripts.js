@@ -45,7 +45,6 @@ function showSection(sectionId, element) {
 }
 
 // ==========================================
-// ==========================================
 // TASK MANAGEMENT & FILTER STATE
 // ==========================================
 let currentTaskFilter = 'all';
@@ -107,13 +106,7 @@ async function fetchTasksFromBackend() {
 
 async function addNewTask() {
     const input = document.getElementById('taskInput');
-    const dueDateInput = document.getElementById('taskDueDate');
-    const subjectInput = document.getElementById('taskSubject');
-
     const title = input ? input.value.trim() : '';
-    const dueDate = dueDateInput ? dueDateInput.value : '';
-    const subject = subjectInput ? subjectInput.value : 'General';
-
     if (!title) return;
 
     const token = getAuthToken();
@@ -127,14 +120,12 @@ async function addNewTask() {
             body: JSON.stringify({ 
                 title, 
                 completed: false, 
-                date: dueDate || new Date().toISOString().split('T')[0],
-                subject: subject
+                date: new Date().toISOString().split('T')[0]
             })
         });
 
         if (response.ok) {
             input.value = '';
-            if (dueDateInput) dueDateInput.value = '';
             fetchTasksFromBackend();
         }
     } catch (error) {
@@ -177,58 +168,14 @@ async function deleteTask(id) {
     }
 }
 
-// Modern render implementation with Subject Badge & Due Date
-function renderTaskList(taskList) {
-    const container = document.getElementById('taskList');
-    if (!container) return;
-
-    container.innerHTML = '';
-
-    if (!taskList || taskList.length === 0) {
-        container.innerHTML = `
-            <div style="text-align: center; padding: 40px 20px; background: white; border-radius: 12px; border: 1px dashed #cbd5e1;">
-                <i class="fa-solid fa-clipboard-check" style="font-size: 36px; color: #cbd5e1; margin-bottom: 10px;"></i>
-                <h4 style="color: #64748b; font-weight: 500; margin: 0;">No tasks found</h4>
-            </div>
-        `;
-        return;
-    }
-
-    taskList.forEach(task => {
-        const item = document.createElement('div');
-        item.className = `task-card-item ${task.completed ? 'completed' : ''}`;
-        
-        item.innerHTML = `
-            <div style="display: flex; align-items: center; gap: 14px;">
-                <input type="checkbox" ${task.completed ? 'checked' : ''} onchange="toggleTask('${task._id}', ${task.completed})" style="width: 18px; height: 18px; accent-color: #2563eb; cursor: pointer;">
-                <div>
-                    <span style="${task.completed ? 'text-decoration: line-through; color: #94a3b8;' : 'color: #0f172a; font-weight: 500;'}">${task.title}</span>
-                    <div style="display: flex; gap: 8px; align-items: center; margin-top: 4px;">
-                        <span style="font-size: 11px; background: #dbeafe; color: #1e40af; font-weight: 600; padding: 2px 8px; border-radius: 10px;">
-                            ${task.subject || 'General'}
-                        </span>
-                        <span style="font-size: 11px; color: #94a3b8;">
-                            <i class="fa-regular fa-calendar"></i> ${task.date || 'Today'}
-                        </span>
-                    </div>
-                </div>
-            </div>
-            <button onclick="deleteTask('${task._id}')" style="background: #fee2e2; border: none; color: #ef4444; width: 32px; height: 32px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center;">
-                <i class="fa-solid fa-trash" style="font-size: 12px;"></i>
-            </button>
-        `;
-        container.appendChild(item);
-    });
-}
-
-// Dashboard metrics calculator (Updates main tab AND right-side task panel)
+// Single Complete Dashboard Calculator (Updates Main Tab + Side Panel + Analytics)
 function updateDashboard() {
     const total = tasks.length;
     const completed = tasks.filter(t => t.completed).length;
     const pending = total - completed;
     const percentage = total === 0 ? 0 : Math.round((completed / total) * 100);
 
-    // Main Stat Cards
+    // Main Dashboard Stat Cards
     if (document.getElementById('totalTasks')) document.getElementById('totalTasks').textContent = total;
     if (document.getElementById('completedTasks')) document.getElementById('completedTasks').textContent = completed;
     if (document.getElementById('pendingTasks')) document.getElementById('pendingTasks').textContent = pending;
@@ -243,6 +190,39 @@ function updateDashboard() {
     const progressText = document.getElementById('progressText');
     if (progressBar) progressBar.value = percentage;
     if (progressText) progressText.textContent = `${percentage}% Completed`;
+
+    // Analytics Cards
+    if (document.getElementById('analyticsRate')) document.getElementById('analyticsRate').textContent = `${percentage}%`;
+    if (document.getElementById('analyticsCompleted')) document.getElementById('analyticsCompleted').textContent = completed;
+    if (document.getElementById('analyticsPending')) document.getElementById('analyticsPending').textContent = pending;
+}
+
+// Clean Simple Task Renderer
+function renderTaskList(taskList) {
+    const container = document.getElementById('taskList');
+    if (!container) return;
+
+    container.innerHTML = '';
+    if (!taskList || taskList.length === 0) {
+        container.innerHTML = '<p style="color: #666; margin-top: 15px;">No tasks found.</p>';
+        return;
+    }
+
+    taskList.forEach(task => {
+        const item = document.createElement('div');
+        item.className = `task-card-item ${task.completed ? 'completed' : ''}`;
+        
+        item.innerHTML = `
+            <div style="display: flex; align-items: center; gap: 12px;">
+                <input type="checkbox" ${task.completed ? 'checked' : ''} onchange="toggleTask('${task._id}', ${task.completed})" style="width: 18px; height: 18px; accent-color: #2563eb; cursor: pointer;">
+                <span style="${task.completed ? 'text-decoration: line-through; color: #94a3b8;' : 'color: #0f172a; font-weight: 500;'}">${task.title}</span>
+            </div>
+            <button onclick="deleteTask('${task._id}')" style="background: #fee2e2; border: none; color: #ef4444; width: 32px; height: 32px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center;">
+                <i class="fa-solid fa-trash" style="font-size: 12px;"></i>
+            </button>
+        `;
+        container.appendChild(item);
+    });
 }
 
 // ==========================================
@@ -335,57 +315,6 @@ async function deleteNote(id) {
 // ==========================================
 // RENDER HELPERS & DOM BUILDERS
 // ==========================================
-function updateDashboard() {
-    const total = tasks.length;
-    const completed = tasks.filter(t => t.completed).length;
-    const pending = total - completed;
-    const percentage = total === 0 ? 0 : Math.round((completed / total) * 100);
-
-    if (document.getElementById('totalTasks')) document.getElementById('totalTasks').textContent = total;
-    if (document.getElementById('completedTasks')) document.getElementById('completedTasks').textContent = completed;
-    if (document.getElementById('pendingTasks')) document.getElementById('pendingTasks').textContent = pending;
-
-    const progressBar = document.getElementById('progressBar');
-    const progressText = document.getElementById('progressText');
-    if (progressBar) progressBar.value = percentage;
-    if (progressText) progressText.textContent = `${percentage}% Completed`;
-
-    if (document.getElementById('analyticsRate')) document.getElementById('analyticsRate').textContent = `${percentage}%`;
-    if (document.getElementById('analyticsCompleted')) document.getElementById('analyticsCompleted').textContent = completed;
-    if (document.getElementById('analyticsPending')) document.getElementById('analyticsPending').textContent = pending;
-}
-
-function renderTaskList(taskList) {
-    const container = document.getElementById('taskList');
-    if (!container) return;
-
-    container.innerHTML = '';
-    if (taskList.length === 0) {
-        container.innerHTML = '<p style="color: #666; margin-top: 15px;">No tasks found.</p>';
-        return;
-    }
-
-    taskList.forEach(task => {
-        const item = document.createElement('div');
-        item.className = `task-item ${task.completed ? 'completed' : ''}`;
-        item.style.cssText = `
-            display: flex; justify-content: space-between; align-items: center;
-            padding: 12px; background: white; margin-top: 10px; border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-        `;
-        item.innerHTML = `
-            <div style="display: flex; align-items: center; gap: 10px;">
-                <input type="checkbox" ${task.completed ? 'checked' : ''} onchange="toggleTask('${task._id}', ${task.completed})">
-                <span style="${task.completed ? 'text-decoration: line-through; color: #888;' : ''}">${task.title}</span>
-            </div>
-            <button onclick="deleteTask('${task._id}')" style="background: none; border: none; color: #ef4444; cursor: pointer;">
-                <i class="fa-solid fa-trash"></i>
-            </button>
-        `;
-        container.appendChild(item);
-    });
-}
-
 function getDaysRemainingText(dueDateStr) {
     const today = new Date(); today.setHours(0, 0, 0, 0);
     const dueDate = new Date(dueDateStr); dueDate.setHours(0, 0, 0, 0);
@@ -503,16 +432,14 @@ function updateCalendarEvents() {
     });
 }
 
-// Calculates completion counts per day of week (Mon-Sun)
 function getWeeklyTaskCounts() {
-    const counts = [0, 0, 0, 0, 0, 0, 0]; // Mon, Tue, Wed, Thu, Fri, Sat, Sun
+    const counts = [0, 0, 0, 0, 0, 0, 0];
 
     tasks.forEach(task => {
         if (task.completed) {
             const completedDate = task.completedAt ? new Date(task.completedAt) : new Date();
-            let dayIndex = completedDate.getDay(); // 0 = Sun, 1 = Mon, ..., 6 = Sat
+            let dayIndex = completedDate.getDay();
 
-            // Map Sun (0) to index 6, Mon (1) to index 0, etc.
             const chartIndex = dayIndex === 0 ? 6 : dayIndex - 1;
             counts[chartIndex]++;
         }
@@ -626,24 +553,20 @@ document.addEventListener('DOMContentLoaded', () => {
     const token = getAuthToken();
     const path = window.location.pathname;
 
-    // 1. Identify current page
     const isLoginPage = path.includes('login.html');
     const isRegisterPage = path.includes('register.html');
     const isDashboard = path.includes('dashboard.html');
 
-    // 2. Protected Route Guard
     if (isDashboard && !token) {
         window.location.href = 'login.html';
         return;
     }
 
-    // 3. Logged-in Guard
     if (token && (isLoginPage || isRegisterPage)) {
         window.location.href = 'dashboard.html';
         return;
     }
 
-    // 4. Initialize Dashboard Components
     if (isDashboard && token) {
         if (typeof fetchTasksFromBackend === 'function') fetchTasksFromBackend();
         if (typeof fetchExamsFromBackend === 'function') fetchExamsFromBackend(); 
