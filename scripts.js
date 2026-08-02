@@ -6,7 +6,7 @@ let statusChartInstance = null;
 // 1. BACKEND & API CONFIGURATION
 // ----------------------------------------------------
 // Change this to your live Render backend URL:
-const API_BASE_URL = 'https://study-planner-backend.onrender.com/api';
+const API_BASE_URL = 'https://study-planner-backend-rklh.onrender.com/api';
 const AUTH_TOKEN_KEY = 'studyplanner.token';
 
 let tasks = [];
