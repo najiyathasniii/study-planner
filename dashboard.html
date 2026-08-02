@@ -14,6 +14,80 @@
     
     <!-- Dashboard Stylesheet -->
     <link rel="stylesheet" href="dashboard.css">
+
+    <!-- Pomodoro Timer Embedded Styling -->
+    <style>
+        .pomodoro-card {
+            margin-top: 25px;
+            text-align: center;
+            padding: 28px;
+            border-top: 4px solid #2563eb;
+            background: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+        }
+        .pomodoro-header {
+            font-size: 20px;
+            color: #1e293b;
+            margin-bottom: 16px;
+            font-weight: 600;
+        }
+        .timer-modes {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        .timer-mode-btn {
+            padding: 8px 18px;
+            border: 1px solid #cbd5e1;
+            border-radius: 20px;
+            background: #f1f5f9;
+            color: #334155;
+            cursor: pointer;
+            font-weight: 500;
+            font-size: 14px;
+            transition: all 0.2s ease;
+        }
+        .timer-mode-btn.active {
+            background: #2563eb;
+            color: #ffffff;
+            border-color: #2563eb;
+        }
+        .timer-display {
+            font-size: 56px;
+            font-weight: 700;
+            color: #0f172a;
+            letter-spacing: 2px;
+            margin-bottom: 20px;
+            font-family: monospace, sans-serif;
+        }
+        .timer-controls {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        .btn-pomo {
+            border: none;
+            padding: 10px 24px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            transition: opacity 0.2s ease;
+        }
+        .btn-pomo:hover {
+            opacity: 0.9;
+        }
+        .btn-pomo-start { background: #10b981; color: white; }
+        .btn-pomo-pause { background: #f59e0b; color: white; }
+        .btn-pomo-reset { background: #64748b; color: white; }
+    </style>
 </head>
 <body>
 
@@ -96,6 +170,38 @@
                 <h2>Overall Progress</h2>
                 <progress id="progressBar" value="0" max="100"></progress>
                 <p id="progressText">0% Completed</p>
+            </div>
+
+            <!-- POMODORO TIMER CARD -->
+            <div class="pomodoro-card">
+                <h2 class="pomodoro-header">
+                    <i class="fa-solid fa-stopwatch" style="color: #ef4444; margin-right: 8px;"></i> Focus Pomodoro Timer
+                </h2>
+                
+                <!-- Timer Modes -->
+                <div class="timer-modes">
+                    <button onclick="setTimerMode(25, this)" class="timer-mode-btn active">25m Focus</button>
+                    <button onclick="setTimerMode(5, this)" class="timer-mode-btn">5m Short Break</button>
+                    <button onclick="setTimerMode(15, this)" class="timer-mode-btn">15m Long Break</button>
+                </div>
+
+                <!-- Clock Display -->
+                <div id="pomoTimerDisplay" class="timer-display">
+                    25:00
+                </div>
+
+                <!-- Control Buttons -->
+                <div class="timer-controls">
+                    <button id="pomoStartBtn" onclick="startPomodoro()" class="btn-pomo btn-pomo-start">
+                        <i class="fa-solid fa-play"></i> Start
+                    </button>
+                    <button onclick="pausePomodoro()" class="btn-pomo btn-pomo-pause">
+                        <i class="fa-solid fa-pause"></i> Pause
+                    </button>
+                    <button onclick="resetPomodoro()" class="btn-pomo btn-pomo-reset">
+                        <i class="fa-solid fa-rotate-right"></i> Reset
+                    </button>
+                </div>
             </div>
         </section>
 
