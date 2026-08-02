@@ -10,7 +10,12 @@ const app = express();
 // ==========================================
 // 1. MIDDLEWARE CONFIGURATION
 // ==========================================
-app.use(cors());
+// Allow CORS requests from frontend origins
+app.use(cors({
+    origin: '*', 
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization']
+}));
 
 // Increase payload limit to 20MB to handle PDF Base64 strings safely
 app.use(express.json({ limit: '20mb' }));
@@ -86,7 +91,7 @@ function authenticateToken(req, res, next) {
 }
 
 // ==========================================
-// 4. AUTHENTICATION ROUTES
+// 4. AUTHENTICATION & PROFILE ROUTES
 // ==========================================
 
 // Register User
@@ -144,14 +149,64 @@ app.post('/api/forgot-password', async (req, res) => {
 
         const user = await User.findOne({ email });
         if (!user) {
-            // For security, respond with success even if email isn't found to avoid user enumeration
             return res.status(200).json({ message: 'If an account exists with that email, password reset instructions have been processed.' });
         }
 
-        // Send a successful response so the frontend trigger works
         res.status(200).json({ message: 'Password reset request received successfully.' });
     } catch (err) {
         res.status(500).json({ error: 'Failed to process forgot password request' });
+    }
+});
+
+// CHANGE PASSWORD (NEW ROUTE REQUIRED BY FRONTEND)
+app.post('/api/change-password', authenticateToken, async (req, res) => {
+    try {
+        const { currentPassword, newPassword } = req.body;
+
+        if (!currentPassword || !newPassword) {
+            return res.status(400).json({ error: 'Current and new password are required' });
+        }
+
+        const user = await User.findById(req.user.id);
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        // Validate old password
+        const isMatch = await bcrypt.compare(currentPassword, user.password);
+        if (!isMatch) {
+            return res.status(400).json({ error: 'Incorrect current password' });
+        }
+
+        // Hash new password & save
+        const hashedPassword = await bcrypt.hash(newPassword, 10);
+        user.password = hashedPassword;
+        await user.save();
+
+        res.status(200).json({ message: 'Password changed successfully!' });
+    } catch (err) {
+        console.error('Change password error:', err);
+        res.status(500).json({ error: 'Failed to change password' });
+    }
+});
+
+// UPDATE USER PROFILE DETAILS (NEW ROUTE)
+app.put('/api/user/profile', authenticateToken, async (req, res) => {
+    try {
+        const { name } = req.body;
+        if (!name) {
+            return res.status(400).json({ error: 'Name is required' });
+        }
+
+        const updatedUser = await User.findByIdAndUpdate(
+            req.user.id,
+            { $set: { name } },
+            { new: true }
+        );
+
+        res.json({ message: 'Profile updated successfully', user: { id: updatedUser._id, name: updatedUser.name, email: updatedUser.email } });
+    } catch (err) {
+        res.status(500).json({ error: 'Failed to update profile' });
     }
 });
 
