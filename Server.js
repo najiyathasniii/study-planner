@@ -260,13 +260,18 @@ app.post('/api/tasks', authenticateToken, async (req, res) => {
     }
 });
 
-// Update Task
+// Update Task (FIXED: Now properly updates the date field)
 app.put('/api/tasks/:id', authenticateToken, async (req, res) => {
     try {
-        const { completed, title } = req.body;
+        const { completed, title, date } = req.body; 
+        
         const updatedTask = await Task.findOneAndUpdate(
             { _id: req.params.id, userId: req.user.id },
-            { $set: { ...(completed !== undefined && { completed }), ...(title && { title }) } },
+            { $set: { 
+                ...(completed !== undefined && { completed }), 
+                ...(title && { title }),
+                ...(date && { date }) 
+            } },
             { new: true }
         );
         res.json(updatedTask);
