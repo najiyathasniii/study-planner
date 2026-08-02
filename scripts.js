@@ -505,11 +505,12 @@ function initCalendar() {
         editable: true,                 
         droppable: true,                
         selectable: true,               
-        selectLongPressDelay: 200,      // Fixes mobile browser touch taps
+        selectLongPressDelay: 200,      
         selectMirror: true,
-        allDayMaintainDuration: false,  // Allows dragging tasks out of all-day header
+        allDayMaintainDuration: false,  
         defaultTimedEventDuration: '01:00:00',
 
+        // 1. Handles creating NEW tasks by clicking/dragging on empty slots
         select: async function(info) {
             const title = prompt('Enter task name:');
             if (!title || !title.trim()) return;
@@ -534,6 +535,35 @@ function initCalendar() {
                 }
             } catch (error) {
                 console.error('Error adding task from calendar:', error);
+            }
+        },
+
+        // 2. NEW: Handles saving the time when you DRAG an existing task
+        eventDrop: async function(info) {
+            const token = getAuthToken();
+            try {
+                // info.event.startStr gets the exact new date and time you dropped it on
+                const payload = { 
+                    date: info.event.startStr 
+                };
+
+                const response = await fetch(`${API_BASE_URL}/api/tasks/${info.event.id}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) {
+                    // If the database fails to save, snap the task back to its original spot
+                    info.revert();
+                    console.error('Backend failed to save the new time.');
+                }
+            } catch (error) {
+                console.error('Error saving dragged task:', error);
+                info.revert();
             }
         },
 
