@@ -99,24 +99,84 @@
             </div>
         </section>
 
-        <!-- 2. TASKS TAB -->
+        <!-- 2. TASKS TAB (ENHANCED LAYOUT) -->
         <section id="tasks-sec" class="tab-content">
-            <header>
-                <h1>My Study Tasks</h1>
-                <p>Organize, search, and manage your daily study list.</p>
+            <header style="margin-bottom: 20px;">
+                <h1>My Study Tasks 📋</h1>
+                <p>Add, search, filter, and track your daily study goals.</p>
             </header>
 
-            <div class="add-task">
-                <input type="text" id="taskInput" placeholder="Add a new task (e.g., Read Chapter 4 Math)...">
-                <button onclick="addNewTask()"><i class="fa-solid fa-plus"></i> Add Task</button>
-            </div>
+            <!-- Grid Layout -->
+            <div class="tasks-layout">
+                
+                <!-- LEFT COLUMN: Input, Search, Filters, and Task List -->
+                <div class="tasks-main-col">
+                    
+                    <!-- Task Input Card -->
+                    <div class="add-task-card">
+                        <div class="add-task-inputs">
+                            <input type="text" id="taskInput" placeholder="Enter new task..." style="flex: 2;">
+                            <input type="date" id="taskDueDate" style="flex: 1;">
+                            <select id="taskSubject" style="flex: 1;">
+                                <option value="General">General</option>
+                                <option value="Math">Math</option>
+                                <option value="Science">Science</option>
+                                <option value="History">History</option>
+                                <option value="English">English</option>
+                            </select>
+                        </div>
+                        <button onclick="addNewTask()" class="btn-add-task">
+                            <i class="fa-solid fa-plus"></i> Add Task
+                        </button>
+                    </div>
 
-            <div style="margin-bottom: 20px;">
-                <input type="text" id="searchTask" placeholder="🔍 Search tasks...">
-            </div>
+                    <!-- Search & Filter Controls -->
+                    <div class="task-controls">
+                        <div class="search-box-wrapper">
+                            <i class="fa-solid fa-magnifying-glass search-icon"></i>
+                            <input type="text" id="searchTask" placeholder="Search tasks..." onkeyup="handleTaskSearch(this.value)">
+                        </div>
 
-            <div id="taskList">
-                <!-- Dynamically populated by scripts.js -->
+                        <div class="task-filter-pills">
+                            <button class="filter-pill active" onclick="filterTaskView('all', this)">All</button>
+                            <button class="filter-pill" onclick="filterTaskView('pending', this)">Pending</button>
+                            <button class="filter-pill" onclick="filterTaskView('completed', this)">Completed</button>
+                        </div>
+                    </div>
+
+                    <!-- Dynamic Task List Container -->
+                    <div id="taskList">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+
+                <!-- RIGHT COLUMN: Tasks Summary -->
+                <div class="tasks-side-col">
+                    <div class="task-summary-card">
+                        <h3><i class="fa-solid fa-chart-pie"></i> Tasks Overview</h3>
+                        <div class="summary-metric">
+                            <span>Total Tasks</span>
+                            <strong id="sideTotal">0</strong>
+                        </div>
+                        <div class="summary-metric">
+                            <span>Pending</span>
+                            <strong id="sidePending" style="color: #f59e0b;">0</strong>
+                        </div>
+                        <div class="summary-metric">
+                            <span>Completed</span>
+                            <strong id="sideCompleted" style="color: #10b981;">0</strong>
+                        </div>
+                        
+                        <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 15px 0;">
+                        
+                        <div style="background: #eff6ff; padding: 12px; border-radius: 10px; border-left: 4px solid #2563eb;">
+                            <p style="font-size: 12px; color: #1e40af; margin: 0; line-height: 1.4;">
+                                💡 <strong>Study Tip:</strong> Set due dates for every task to automatically update your progress charts and schedule!
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
             </div>
         </section>
 
@@ -257,11 +317,8 @@
 </div>
 
 <!-- ================= EXTERNAL LIBRARIES ================= -->
-<!-- Chart.js -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<!-- FullCalendar.js -->
 <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js"></script>
-<!-- Main JavaScript Logic -->
 <script src="scripts.js"></script>
 
 </body>
