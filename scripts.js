@@ -686,3 +686,93 @@ function renderExams() {
 document.addEventListener('DOMContentLoaded', () => {
     setTimeout(renderExams, 100);
 });
+// ==========================================
+// SUBJECT-WISE QUICK NOTES LOGIC
+// ==========================================
+let studyNotes = JSON.parse(localStorage.getItem('study_notes')) || [];
+
+function saveAndRenderNotes() {
+    localStorage.setItem('study_notes', JSON.stringify(studyNotes));
+    renderNotes();
+}
+
+function addQuickNote() {
+    const title = document.getElementById('noteTitle')?.value.trim();
+    const subject = document.getElementById('noteSubject')?.value.trim() || 'General';
+    const content = document.getElementById('noteContent')?.value.trim();
+
+    if (!title || !content) {
+        alert('Please enter both a note title and some content!');
+        return;
+    }
+
+    const newNote = {
+        id: Date.now().toString(),
+        title: title,
+        subject: subject,
+        content: content,
+        date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+    };
+
+    studyNotes.unshift(newNote); // Put newest notes at the top
+    saveAndRenderNotes();
+
+    // Clear inputs
+    document.getElementById('noteTitle').value = '';
+    document.getElementById('noteSubject').value = '';
+    document.getElementById('noteContent').value = '';
+}
+
+function deleteNote(id) {
+    studyNotes = studyNotes.filter(note => note.id !== id);
+    saveAndRenderNotes();
+}
+
+function renderNotes() {
+    const notesGrid = document.getElementById('notesGrid');
+    if (!notesGrid) return;
+
+    notesGrid.innerHTML = '';
+
+    if (studyNotes.length === 0) {
+        notesGrid.innerHTML = `<p style="grid-column: 1/-1; color: #888; text-align: center;">No quick notes added yet. Jot down your first note above! 💡</p>`;
+        return;
+    }
+
+    studyNotes.forEach(note => {
+        const card = document.createElement('div');
+        card.style.cssText = `
+            background: #ffffff;
+            border-radius: 10px;
+            padding: 16px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            border-top: 4px solid #2563eb;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        `;
+
+        card.innerHTML = `
+            <div>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                    <span style="font-size: 11px; background: #dbeafe; color: #1e40af; font-weight: 600; padding: 2px 8px; border-radius: 12px;">${note.subject}</span>
+                    <span style="font-size: 11px; color: #9ca3af;">${note.date}</span>
+                </div>
+                <h4 style="font-size: 16px; color: #111827; margin-bottom: 6px;">${note.title}</h4>
+                <p style="font-size: 13px; color: #4b5563; white-space: pre-wrap; line-height: 1.5;">${note.content}</p>
+            </div>
+            <div style="text-align: right; margin-top: 15px;">
+                <button onclick="deleteNote('${note.id}')" style="background: none; border: none; color: #ef4444; cursor: pointer; font-size: 13px;">
+                    <i class="fa-solid fa-trash"></i> Delete
+                </button>
+            </div>
+        `;
+
+        notesGrid.appendChild(card);
+    });
+}
+
+// Render notes on DOM Load
+document.addEventListener('DOMContentLoaded', () => {
+    setTimeout(renderNotes, 100);
+});
