@@ -38,6 +38,10 @@ function showSection(sectionId, element) {
     if (sectionId === 'calendar-sec' && calendar) {
         setTimeout(() => calendar.render(), 100);
     }
+
+    if (sectionId === 'progress-sec') {
+        setTimeout(updateCharts, 100);
+    }
 }
 
 // ==========================================
@@ -89,13 +93,18 @@ async function addNewTask() {
 async function toggleTask(id, currentStatus) {
     const token = getAuthToken();
     try {
+        const payload = { 
+            completed: !currentStatus,
+            completedAt: !currentStatus ? new Date().toISOString() : null
+        };
+
         const response = await fetch(`${API_BASE_URL}/api/tasks/${id}`, {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${token}`
             },
-            body: JSON.stringify({ completed: !currentStatus })
+            body: JSON.stringify(payload)
         });
         if (response.ok) fetchTasksFromBackend();
     } catch (error) {
@@ -286,6 +295,7 @@ function updateDashboard() {
 
     if (document.getElementById('analyticsRate')) document.getElementById('analyticsRate').textContent = `${percentage}%`;
     if (document.getElementById('analyticsCompleted')) document.getElementById('analyticsCompleted').textContent = completed;
+    if (document.getElementById('analyticsPending')) document.getElementById('analyticsPending').textContent = pending;
 }
 
 function renderTaskList(taskList) {
@@ -436,27 +446,62 @@ function updateCalendarEvents() {
     });
 }
 
+// Calculates completion counts per day of week (Mon-Sun)
+function getWeeklyTaskCounts() {
+    const counts = [0, 0, 0, 0, 0, 0, 0]; // Mon, Tue, Wed, Thu, Fri, Sat, Sun
+
+    tasks.forEach(task => {
+        if (task.completed) {
+            const completedDate = task.completedAt ? new Date(task.completedAt) : new Date();
+            let dayIndex = completedDate.getDay(); // 0 = Sun, 1 = Mon, ..., 6 = Sat
+
+            // Map Sun (0) to index 6, Mon (1) to index 0, etc.
+            const chartIndex = dayIndex === 0 ? 6 : dayIndex - 1;
+            counts[chartIndex]++;
+        }
+    });
+
+    return counts;
+}
+
 function initCharts() {
     const weeklyCtx = document.getElementById('weeklyChart')?.getContext('2d');
     const statusCtx = document.getElementById('statusChart')?.getContext('2d');
+
+    if (weeklyChart) weeklyChart.destroy();
+    if (statusChart) statusChart.destroy();
 
     if (weeklyCtx) {
         weeklyChart = new Chart(weeklyCtx, {
             type: 'bar',
             data: {
                 labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
-                datasets: [{ label: 'Tasks Completed', data: [2, 4, 3, 5, 1, 0, 0], backgroundColor: '#2563eb' }]
+                datasets: [{ 
+                    label: 'Tasks Completed', 
+                    data: getWeeklyTaskCounts(), 
+                    backgroundColor: '#2563eb',
+                    borderRadius: 4
+                }]
             },
-            options: { responsive: true, maintainAspectRatio: false }
+            options: { 
+                responsive: true, 
+                maintainAspectRatio: false,
+                scales: {
+                    y: { beginAtZero: true, ticks: { stepSize: 1 } }
+                }
+            }
         });
     }
 
     if (statusCtx) {
+        const completed = tasks.filter(t => t.completed).length;
+        const pending = tasks.length - completed;
+
         statusChart = new Chart(statusCtx, {
             type: 'doughnut',
             data: {
                 labels: ['Completed', 'Pending'],
-                datasets: [{ data: [0, 0], backgroundColor: ['#10b981', '#f59e0b'] }]
+                datasets: [{ data: [completed, pending], backgroundColor: ['#10b981', '#f59e0b'] }]
             },
             options: { responsive: true, maintainAspectRatio: false }
         });
@@ -464,6 +509,10 @@ function initCharts() {
 }
 
 function updateCharts() {
+    if (weeklyChart) {
+        weeklyChart.data.datasets[0].data = getWeeklyTaskCounts();
+        weeklyChart.update();
+    }
     if (statusChart) {
         const completed = tasks.filter(t => t.completed).length;
         const pending = tasks.length - completed;
@@ -513,55 +562,45 @@ function initAuthForms() {
 }
 
 // ==========================================
-// 8. INITIALIZE ON PAGE LOAD
-// ==========================================
-// ==========================================
-// 8. INITIALIZE ON PAGE LOAD
+// INITIALIZE ON PAGE LOAD
 // ==========================================
 document.addEventListener('DOMContentLoaded', () => {
 
     const token = getAuthToken();
     const path = window.location.pathname;
 
-    // 1. Identify what page the user is currently on
+    // 1. Identify current page
     const isLoginPage = path.includes('login.html');
     const isRegisterPage = path.includes('register.html');
-    const isLandingPage = path.includes('index.html') || path === '/' || path.endsWith('/');
     const isDashboard = path.includes('dashboard.html');
 
-    // 2. PROTECTED ROUTE GUARD
-    // If user tries to open dashboard without a token -> Redirect to login
+    // 2. Protected Route Guard
     if (isDashboard && !token) {
         window.location.href = 'login.html';
         return;
     }
 
-    // 3. ALREADY LOGGED-IN GUARD
-    // If user is already logged in and opens login/register -> Redirect straight to dashboard
+    // 3. Logged-in Guard
     if (token && (isLoginPage || isRegisterPage)) {
         window.location.href = 'dashboard.html';
         return;
     }
 
-    // 4. RUN DASHBOARD CODE ONLY IF WE ARE ON DASHBOARD.HTML
+    // 4. Initialize Dashboard Components
     if (isDashboard && token) {
-        // Fetch data
         if (typeof fetchTasksFromBackend === 'function') fetchTasksFromBackend();
         if (typeof fetchExamsFromBackend === 'function') fetchExamsFromBackend(); 
         if (typeof fetchNotesFromBackend === 'function') fetchNotesFromBackend(); 
 
-        // Safe component initialization
         if (typeof loadSavedProfile === 'function') loadSavedProfile();
         if (typeof initCalendar === 'function') initCalendar();
         
-        // Prevents the giant blue bar chart glitch
         const chartCanvas = document.getElementById('weeklyChart');
         if (chartCanvas && typeof initCharts === 'function') {
             initCharts();
         }
     }
 
-    // Initialize auth form listeners on login/register pages
     if ((isLoginPage || isRegisterPage) && typeof initAuthForms === 'function') {
         initAuthForms();
     }
