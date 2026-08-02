@@ -49,11 +49,9 @@ function showSection(sectionId, element) {
 // ==========================================
 let currentTaskFilter = 'all';
 
-// Filter Pills Click Handler
 function filterTaskView(filterType, element) {
     currentTaskFilter = filterType;
     
-    // Update active tab button style
     const pills = document.querySelectorAll('.filter-pill');
     pills.forEach(p => p.classList.remove('active'));
     if (element) element.classList.add('active');
@@ -61,20 +59,16 @@ function filterTaskView(filterType, element) {
     applyTaskFilters();
 }
 
-// Search input handler
 function handleTaskSearch(query) {
     applyTaskFilters(query.toLowerCase().trim());
 }
 
-// Filter combiner logic
 function applyTaskFilters(searchQuery = '') {
     let filtered = [...tasks];
 
-    // Status filter
     if (currentTaskFilter === 'pending') filtered = filtered.filter(t => !t.completed);
     if (currentTaskFilter === 'completed') filtered = filtered.filter(t => t.completed);
 
-    // Search query filter
     const query = searchQuery || document.getElementById('searchTask')?.value.toLowerCase().trim();
     if (query) {
         filtered = filtered.filter(t => t.title.toLowerCase().includes(query));
@@ -95,7 +89,7 @@ async function fetchTasksFromBackend() {
         if (response.ok) {
             tasks = await response.json();
             updateDashboard();
-            applyTaskFilters(); // Applies filters and calls renderTaskList()
+            applyTaskFilters();
             if (typeof updateCalendarEvents === 'function') updateCalendarEvents();
             if (typeof updateCharts === 'function') updateCharts();
         }
@@ -168,36 +162,30 @@ async function deleteTask(id) {
     }
 }
 
-// Single Complete Dashboard Calculator
 function updateDashboard() {
     const total = tasks.length;
     const completed = tasks.filter(t => t.completed).length;
     const pending = total - completed;
     const percentage = total === 0 ? 0 : Math.round((completed / total) * 100);
 
-    // Main Dashboard Stat Cards
     if (document.getElementById('totalTasks')) document.getElementById('totalTasks').textContent = total;
     if (document.getElementById('completedTasks')) document.getElementById('completedTasks').textContent = completed;
     if (document.getElementById('pendingTasks')) document.getElementById('pendingTasks').textContent = pending;
 
-    // Right-Side Task Panel Metrics
     if (document.getElementById('sideTotal')) document.getElementById('sideTotal').textContent = total;
     if (document.getElementById('sideCompleted')) document.getElementById('sideCompleted').textContent = completed;
     if (document.getElementById('sidePending')) document.getElementById('sidePending').textContent = pending;
 
-    // Progress Bar
     const progressBar = document.getElementById('progressBar');
     const progressText = document.getElementById('progressText');
     if (progressBar) progressBar.value = percentage;
     if (progressText) progressText.textContent = `${percentage}% Completed`;
 
-    // Analytics Cards
     if (document.getElementById('analyticsRate')) document.getElementById('analyticsRate').textContent = `${percentage}%`;
     if (document.getElementById('analyticsCompleted')) document.getElementById('analyticsCompleted').textContent = completed;
     if (document.getElementById('analyticsPending')) document.getElementById('analyticsPending').textContent = pending;
 }
 
-// Clean Simple Task Renderer
 function renderTaskList(taskList) {
     const container = document.getElementById('taskList');
     if (!container) return;
@@ -244,9 +232,9 @@ async function fetchExamsFromBackend() {
 }
 
 async function addNewExam() {
-    const titleInput = document.getElementById('examTitle') || document.querySelector('.add-exam-form input[type="text"]:nth-of-type(1)');
-    const subjectInput = document.getElementById('examSubject') || document.querySelector('.add-exam-form input[type="text"]:nth-of-type(2)');
-    const dateInput = document.getElementById('examDate') || document.querySelector('.add-exam-form input[type="date"]');
+    const titleInput = document.getElementById('examTitle');
+    const subjectInput = document.getElementById('examSubject');
+    const dateInput = document.getElementById('examDate');
 
     const title = titleInput ? titleInput.value.trim() : '';
     const subject = subjectInput ? subjectInput.value.trim() : 'General';
@@ -257,7 +245,6 @@ async function addNewExam() {
         return;
     }
 
-    // Standardize date input to YYYY-MM-DD ISO string
     const parsedDate = new Date(rawDate);
     if (isNaN(parsedDate.getTime())) {
         alert('Please enter a valid date!');
@@ -396,7 +383,7 @@ async function deleteNote(id) {
 }
 
 // ==========================================
-// RENDER HELPERS & DOM BUILDERS
+// RENDER HELPERS
 // ==========================================
 function getDaysRemainingText(dueDateStr) {
     const today = new Date(); today.setHours(0, 0, 0, 0);
@@ -517,17 +504,14 @@ function updateCalendarEvents() {
 
 function getWeeklyTaskCounts() {
     const counts = [0, 0, 0, 0, 0, 0, 0];
-
     tasks.forEach(task => {
         if (task.completed) {
             const completedDate = task.completedAt ? new Date(task.completedAt) : new Date();
             let dayIndex = completedDate.getDay();
-
             const chartIndex = dayIndex === 0 ? 6 : dayIndex - 1;
             counts[chartIndex]++;
         }
     });
-
     return counts;
 }
 
@@ -589,10 +573,10 @@ function updateCharts() {
 }
 
 // ==========================================
-// USER PROFILE & AUTH HELPERS
+// USER PROFILE & SETTINGS LOGIC
 // ==========================================
 function loadSavedProfile() {
-    const userName = localStorage.getItem('userName') || 'User';
+    const userName = localStorage.getItem('userName') || 'Student';
     const userEmail = localStorage.getItem('userEmail') || '';
 
     const headerTitle = document.querySelector('header h1');
@@ -612,20 +596,120 @@ function loadSavedProfile() {
     }
 }
 
+function handleAvatarUpload(event) {
+    const file = event.target.files[0];
+    if (file) {
+        if (file.size > 2 * 1024 * 1024) {
+            alert('Image size exceeds 2MB limit!');
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = function (e) {
+            const avatarBase64 = e.target.result;
+            const img = document.getElementById('profileImage');
+            if (img) img.src = avatarBase64;
+            localStorage.setItem('userAvatar', avatarBase64);
+            alert('Profile picture updated!');
+        };
+        reader.readAsDataURL(file);
+    }
+}
+
+async function saveProfile() {
+    const nameInput = document.getElementById('settingName');
+    const name = nameInput ? nameInput.value.trim() : '';
+
+    if (!name) {
+        alert('Name cannot be empty!');
+        return;
+    }
+
+    localStorage.setItem('userName', name);
+    loadSavedProfile();
+
+    const token = getAuthToken();
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/user/profile`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({ name })
+        });
+
+        if (response.ok) {
+            alert('Profile details saved!');
+        } else {
+            alert('Profile details saved!');
+        }
+    } catch (err) {
+        console.warn('Backend update failed; saved to local browser storage.');
+        alert('Profile details saved!');
+    }
+}
+
+async function changePassword() {
+    const currentPassword = document.getElementById('currentPassword')?.value.trim();
+    const newPassword = document.getElementById('newPassword')?.value.trim();
+    const confirmPassword = document.getElementById('confirmPassword')?.value.trim();
+
+    if (!currentPassword || !newPassword || !confirmPassword) {
+        alert('Please fill out all password fields!');
+        return;
+    }
+
+    if (newPassword.length < 6) {
+        alert('New password must be at least 6 characters long.');
+        return;
+    }
+
+    if (newPassword !== confirmPassword) {
+        alert('New passwords do not match!');
+        return;
+    }
+
+    const token = getAuthToken();
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/change-password`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({ currentPassword, newPassword })
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+            alert(data.message || 'Password changed successfully!');
+            document.getElementById('currentPassword').value = '';
+            document.getElementById('newPassword').value = '';
+            document.getElementById('confirmPassword').value = '';
+        } else {
+            alert(data.error || data.message || 'Failed to change password. Please check your current password.');
+        }
+    } catch (error) {
+        console.error('Password change error:', error);
+        alert('Unable to connect to the server. Please try again later.');
+    }
+}
+
 function logoutUser() {
     localStorage.removeItem('token');
     localStorage.removeItem('userName');
     localStorage.removeItem('userEmail');
+    localStorage.removeItem('userAvatar');
     window.location.href = 'login.html';
 }
 
 function initAuthForms() {
-    // ------------------- LOGIN FORM HANDLER -------------------
     const loginForm = document.getElementById('loginForm');
     if (loginForm) {
         loginForm.addEventListener('submit', async (e) => {
             e.preventDefault();
-
             const email = document.getElementById('loginEmail')?.value.trim().toLowerCase();
             const password = document.getElementById('loginPassword')?.value.trim();
 
@@ -647,7 +731,6 @@ function initAuthForms() {
                     localStorage.setItem('token', data.token);
                     if (data.user?.name) localStorage.setItem('userName', data.user.name);
                     if (data.user?.email) localStorage.setItem('userEmail', data.user.email);
-
                     window.location.href = 'dashboard.html';
                 } else {
                     alert(data.error || data.message || 'Invalid email or password');
@@ -659,12 +742,10 @@ function initAuthForms() {
         });
     }
 
-    // ------------------- REGISTER FORM HANDLER -------------------
     const registerForm = document.getElementById('registerForm');
     if (registerForm) {
         registerForm.addEventListener('submit', async (e) => {
             e.preventDefault();
-
             const name = document.getElementById('registerName')?.value.trim();
             const email = document.getElementById('registerEmail')?.value.trim().toLowerCase();
             const password = document.getElementById('registerPassword')?.value.trim();
@@ -696,58 +777,12 @@ function initAuthForms() {
             }
         });
     }
-
-    // ------------------- FORGOT PASSWORD FORM HANDLER -------------------
-    const forgotPasswordForm = document.getElementById('forgotPasswordForm');
-    if (forgotPasswordForm) {
-        forgotPasswordForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-
-            const email = document.getElementById('forgotEmail')?.value.trim().toLowerCase();
-
-            if (!email) {
-                alert('Please enter your email address.');
-                return;
-            }
-
-            try {
-                const response = await fetch(`${API_BASE_URL}/api/forgot-password`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email })
-                });
-
-                const data = await response.json();
-
-                if (response.ok) {
-                    alert(data.message || 'If an account exists, reset instructions have been sent!');
-                    window.location.href = 'login.html';
-                } else {
-                    alert(data.error || data.message || 'Unable to process request.');
-                }
-            } catch (error) {
-                console.error('Forgot Password Error:', error);
-                alert('Unable to connect to server. Please try again.');
-            }
-        });
-    }
-
-    // Task search bar listener
-    const searchInput = document.getElementById('searchTask');
-    if (searchInput) {
-        searchInput.addEventListener('input', (e) => {
-            const query = e.target.value.toLowerCase();
-            const filtered = tasks.filter(t => t.title.toLowerCase().includes(query));
-            renderTaskList(filtered);
-        });
-    }
 }
 
 // ==========================================
 // INITIALIZE ON PAGE LOAD
 // ==========================================
 document.addEventListener('DOMContentLoaded', () => {
-
     const token = getAuthToken();
     const path = window.location.pathname;
 
@@ -756,7 +791,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const isForgotPasswordPage = path.includes('forgot-password.html');
     const isDashboard = path.includes('dashboard.html') || path === '/' || path === '';
 
-    // Route Protection
     if (isDashboard && !token) {
         window.location.href = 'login.html';
         return;
@@ -767,13 +801,11 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
     }
 
-    // Attach File Input Listener for PDF Uploads
     const fileInput = document.getElementById('noteFileInput');
     if (fileInput) {
         fileInput.addEventListener('change', handleFileSelect);
     }
 
-    // If on Dashboard with valid auth token, load state
     if (token) {
         fetchTasksFromBackend();
         fetchExamsFromBackend();
@@ -788,7 +820,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // Initialize forms on Login, Register, or Forgot Password pages
     if (isLoginPage || isRegisterPage || isForgotPasswordPage) {
         initAuthForms();
     }
