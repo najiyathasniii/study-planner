@@ -515,21 +515,31 @@ function initAuthForms() {
 // ==========================================
 // 8. INITIALIZE ON PAGE LOAD
 // ==========================================
+// ==========================================
+// 8. INITIALIZE ON PAGE LOAD
+// ==========================================
 document.addEventListener('DOMContentLoaded', () => {
 
     // Check auth token before fetching
     const token = getAuthToken();
-    const isAuthPage = window.location.pathname.includes('login.html') || window.location.pathname.includes('index.html');
+    
+    // Check if the current page is an auth page (login, register, or root index)
+    const isAuthPage = window.location.pathname.includes('login.html') || 
+                       window.location.pathname.includes('register.html') || 
+                       window.location.pathname.includes('index.html') ||
+                       window.location.pathname === '/';
 
+    // If not logged in and trying to view dashboard/protected pages -> Redirect to login
     if (!token && !isAuthPage) {
         window.location.href = 'login.html';
         return;
     }
 
+    // Only attempt to fetch user data if a token actually exists
     if (token) {
         fetchTasksFromBackend();
-        fetchExamsFromBackend(); // <-- Synchronizes exams across all devices!
-        fetchNotesFromBackend(); // <-- Synchronizes PDFs across all devices!
+        fetchExamsFromBackend(); 
+        fetchNotesFromBackend(); 
     }
 
     loadSavedProfile();
