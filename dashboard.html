@@ -109,8 +109,6 @@
             <div class="tasks-layout">
                 <!-- LEFT COLUMN: Task Input, Search, Filters, List -->
                 <div class="tasks-main-col">
-                    
-                    <!-- Original Clean Add Task -->
                     <div class="add-task">
                         <input type="text" id="taskInput" placeholder="Enter new task...">
                         <button onclick="addNewTask()"><i class="fa-solid fa-plus"></i> Add Task</button>
@@ -136,7 +134,7 @@
                     </div>
                 </div>
 
-                <!-- RIGHT COLUMN: Tasks Overview Summary Panel -->
+                <!-- RIGHT COLUMN: Tasks Summary Panel -->
                 <div class="tasks-side-col">
                     <div class="task-summary-card">
                         <h3><i class="fa-solid fa-chart-pie"></i> Tasks Overview</h3>
@@ -158,29 +156,26 @@
         </section>
 
         <!-- 3. EXAMS & DUE DATES TAB -->
-     <!-- 3. EXAMS & DUE DATES TAB -->
-<section id="exams-sec" class="tab-content">
-    <header>
-        <h1>Exams & Assignments</h1>
-        <p>Track your test dates and project deadlines.</p>
-    </header>
+        <section id="exams-sec" class="tab-content">
+            <header>
+                <h1>Exams & Assignments</h1>
+                <p>Track your test dates and project deadlines.</p>
+            </header>
 
-    <div class="settings-card" style="margin-top: 20px;">
-        <h3>Add Exam / Deadline</h3>
-        <div class="add-task" style="flex-wrap: wrap;">
-            <input type="text" id="examTitle" placeholder="Exam Title (e.g., Physics Midterm)" style="flex: 2;">
-            <input type="text" id="examSubject" placeholder="Subject (e.g., Physics)" style="flex: 1;">
-            <input type="date" id="examDate" style="flex: 1;">
-            
-            <!-- EXPLICIT type="button" PREVENTS PAGE RELOADS -->
-            <button type="button" onclick="addNewExam()"><i class="fa-solid fa-plus"></i> Add Item</button>
-        </div>
-    </div>
+            <div class="settings-card" style="margin-top: 20px;">
+                <h3>Add Exam / Deadline</h3>
+                <div class="add-task" style="flex-wrap: wrap;">
+                    <input type="text" id="examTitle" placeholder="Exam Title (e.g., Physics Midterm)" style="flex: 2;">
+                    <input type="text" id="examSubject" placeholder="Subject (e.g., Physics)" style="flex: 1;">
+                    <input type="date" id="examDate" style="flex: 1;">
+                    <button type="button" onclick="addNewExam()"><i class="fa-solid fa-plus"></i> Add Item</button>
+                </div>
+            </div>
 
-    <div id="examTrackerList" style="display: flex; flex-direction: column; gap: 12px; margin-top: 20px;">
-        <!-- Dynamically populated -->
-    </div>
-</section>
+            <div id="examTrackerList" style="display: flex; flex-direction: column; gap: 12px; margin-top: 20px;">
+                <!-- Dynamically populated -->
+            </div>
+        </section>
 
         <!-- 4. PDF & NOTES TAB -->
         <section id="notes-sec" class="tab-content">
@@ -197,7 +192,7 @@
                         <input type="text" id="noteSubject" placeholder="Subject" style="flex: 1; padding: 10px; border: 1px solid #cbd5e1; border-radius: 8px;">
                     </div>
                     <div class="profile-upload-group" style="margin-bottom: 0;">
-                        <label for="noteFileInput" class="btn-secondary" style="margin: 0;">
+                        <label for="noteFileInput" class="btn-secondary" style="margin: 0; cursor: pointer;">
                             <i class="fa-solid fa-file-arrow-up"></i> Choose File
                         </label>
                         <input type="file" id="noteFileInput" accept=".pdf,image/*" onchange="handleFileSelect(event)">
@@ -266,26 +261,61 @@
         <section id="settings-sec" class="tab-content">
             <header>
                 <h1>Settings</h1>
-                <p>Update your personal information and application preferences.</p>
+                <p>Update your personal information, profile photo, and password.</p>
             </header>
 
             <div class="settings-container">
+                <!-- PROFILE DETAILS CARD -->
                 <div class="settings-card">
                     <h3>Profile Details</h3>
-                    <div class="profile-upload-group">
+                    
+                    <div class="profile-upload-group" style="display: flex; align-items: center; gap: 20px; margin-bottom: 20px;">
                         <div class="avatar-preview">
-                            <img id="profileImage" src="https://via.placeholder.com/80" alt="Avatar">
+                            <img id="profileImage" src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' fill='%23cbd5e1' viewBox='0 0 24 24'><path d='M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 4c1.93 0 3.5 1.57 3.5 3.5S13.93 13 12 13s-3.5-1.57-3.5-3.5S10.07 6 12 6zm0 14c-2.03 0-3.8-.85-5.05-2.2.03-1.66 3.37-2.57 5.05-2.57s5.02.91 5.05 2.57C15.8 19.15 14.03 20 12 20z'/></svg>" alt="Avatar" style="width: 90px; height: 90px; border-radius: 50%; object-fit: cover; border: 3px solid #2563eb; background: #f8fafc;">
+                        </div>
+                        <div>
+                            <label for="avatarInput" style="background: #2563eb; color: #ffffff; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 500; display: inline-flex; align-items: center; gap: 8px;">
+                                <i class="fa-solid fa-camera"></i> Upload Photo
+                            </label>
+                            <input type="file" id="avatarInput" accept="image/*" style="display: none;" onchange="handleAvatarUpload(event)">
+                            <p style="font-size: 12px; color: #64748b; margin-top: 6px;">PNG, JPG, or GIF up to 2MB</p>
                         </div>
                     </div>
+
                     <div class="settings-form">
-                        <div class="input-group">
-                            <label for="settingName">Full Name</label>
-                            <input type="text" id="settingName" placeholder="John Doe">
+                        <div class="input-group" style="margin-bottom: 15px;">
+                            <label for="settingName" style="display: block; font-size: 14px; font-weight: 500; color: #334155; margin-bottom: 6px;">Full Name</label>
+                            <input type="text" id="settingName" placeholder="Enter full name" style="width: 100%; padding: 10px 14px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px;">
                         </div>
-                        <div class="input-group">
-                            <label for="settingEmail">Email Address</label>
-                            <input type="email" id="settingEmail" placeholder="john@example.com" disabled style="background: #f1f5f9; cursor: not-allowed;">
+                        <div class="input-group" style="margin-bottom: 20px;">
+                            <label for="settingEmail" style="display: block; font-size: 14px; font-weight: 500; color: #334155; margin-bottom: 6px;">Email Address</label>
+                            <input type="email" id="settingEmail" placeholder="email@example.com" disabled style="width: 100%; padding: 10px 14px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px; background: #f1f5f9; cursor: not-allowed; color: #64748b;">
                         </div>
+                        <button type="button" onclick="saveProfile()" style="background: #2563eb; color: white; border: none; padding: 10px 20px; border-radius: 8px; font-weight: 500; cursor: pointer; display: inline-flex; align-items: center; gap: 8px;">
+                            <i class="fa-solid fa-floppy-disk"></i> Save Profile Details
+                        </button>
+                    </div>
+                </div>
+
+                <!-- CHANGE PASSWORD CARD -->
+                <div class="settings-card" style="margin-top: 25px;">
+                    <h3>Change Password</h3>
+                    <div class="settings-form">
+                        <div class="input-group" style="margin-bottom: 15px;">
+                            <label for="currentPassword" style="display: block; font-size: 14px; font-weight: 500; color: #334155; margin-bottom: 6px;">Current Password</label>
+                            <input type="password" id="currentPassword" placeholder="••••••••" style="width: 100%; padding: 10px 14px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px;">
+                        </div>
+                        <div class="input-group" style="margin-bottom: 15px;">
+                            <label for="newPassword" style="display: block; font-size: 14px; font-weight: 500; color: #334155; margin-bottom: 6px;">New Password</label>
+                            <input type="password" id="newPassword" placeholder="Minimum 6 characters" style="width: 100%; padding: 10px 14px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px;">
+                        </div>
+                        <div class="input-group" style="margin-bottom: 20px;">
+                            <label for="confirmPassword" style="display: block; font-size: 14px; font-weight: 500; color: #334155; margin-bottom: 6px;">Confirm New Password</label>
+                            <input type="password" id="confirmPassword" placeholder="Re-enter new password" style="width: 100%; padding: 10px 14px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px;">
+                        </div>
+                        <button type="button" onclick="changePassword()" style="background: #059669; color: white; border: none; padding: 10px 20px; border-radius: 8px; font-weight: 500; cursor: pointer; display: inline-flex; align-items: center; gap: 8px;">
+                            <i class="fa-solid fa-key"></i> Update Password
+                        </button>
                     </div>
                 </div>
             </div>
