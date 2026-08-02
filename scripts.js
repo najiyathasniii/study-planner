@@ -947,3 +947,71 @@ document.addEventListener('DOMContentLoaded', () => {
         initAuthForms();
     }
 });
+// ==========================================
+// POMODORO TIMER CODE
+// ==========================================
+let timerInterval = null;
+let currentDurationInSeconds = 25 * 60; // Default: 25 minutes
+let timeLeft = 25 * 60;
+let isTimerRunning = false;
+
+// 1. Update display clock (MM:SS)
+function updatePomoDisplay() {
+    const display = document.getElementById('pomoTimerDisplay');
+    if (!display) return;
+
+    const minutes = Math.floor(timeLeft / 60);
+    const seconds = timeLeft % 60;
+    display.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+}
+
+// 2. Mode Switcher (25m, 5m, 15m)
+function setTimerMode(minutes, element) {
+    pausePomodoro();
+    
+    // Toggle active class on buttons
+    if (element) {
+        document.querySelectorAll('.timer-mode-btn').forEach(btn => btn.classList.remove('active'));
+        element.classList.add('active');
+    }
+
+    currentDurationInSeconds = minutes * 60;
+    timeLeft = currentDurationInSeconds;
+    updatePomoDisplay();
+}
+
+// 3. Start Timer
+function startPomodoro() {
+    if (isTimerRunning) return;
+    isTimerRunning = true;
+
+    timerInterval = setInterval(() => {
+        if (timeLeft > 0) {
+            timeLeft--;
+            updatePomoDisplay();
+        } else {
+            clearInterval(timerInterval);
+            isTimerRunning = false;
+            alert("⏰ Pomodoro session completed! Take a break.");
+        }
+    }, 1000);
+}
+
+// 4. Pause Timer
+function pausePomodoro() {
+    clearInterval(timerInterval);
+    timerInterval = null;
+    isTimerRunning = false;
+}
+
+// 5. Reset Timer
+function resetPomodoro() {
+    pausePomodoro();
+    timeLeft = currentDurationInSeconds;
+    updatePomoDisplay();
+}
+
+// Load timer display on page start
+document.addEventListener('DOMContentLoaded', () => {
+    updatePomoDisplay();
+});
