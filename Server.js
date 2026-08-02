@@ -16,8 +16,21 @@ const cors = require('cors');
 const app = express();
 
 // ---------- Global middleware ----------
-app.use(cors());            // Allows the frontend (opened from a different origin/port) to call this API.
-app.use(express.json());    // Parses incoming JSON request bodies into req.body.
+app.use(cors({
+  origin: [
+    'https://study-planner-six-beige.vercel.app', // Allows your live Vercel website
+    'http://localhost:5500',                      // Allows local testing
+    'http://localhost:3000'                       // Allows local testing
+  ],
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
+app.use(express.json()); // Parses incoming JSON request bodies into req.body.
+
+// Health check route so you can easily test if the server is awake
+app.get('/', (req, res) => {
+  res.send('Study Planner Backend is perfectly awake and running!');
+});
 
 // ---------- Environment variables ----------
 const PORT = process.env.PORT || 5000;
@@ -63,7 +76,7 @@ const taskSchema = new mongoose.Schema(
   {
     user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
     title: { type: String, required: true, trim: true },
-    tag: { type: String, trim: true, default: '' },      // e.g. subject: "Physics"
+    tag: { type: String, trim: true, default: '' },       // e.g. subject: "Physics"
     meta: { type: String, trim: true, default: '' },      // e.g. "Due 5:00 PM" / "Tomorrow"
     status: { type: String, enum: ['today', 'upcoming', 'completed'], default: 'today' }
   },
