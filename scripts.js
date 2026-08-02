@@ -101,7 +101,16 @@ async function fetchTasksFromBackend() {
 async function addNewTask() {
     const input = document.getElementById('taskInput');
     const title = input ? input.value.trim() : '';
+    
+    // Optional inputs: fallback to default if specific inputs don't exist in HTML
+    const dateInput = document.getElementById('taskDate')?.value;
+    const timeInput = document.getElementById('taskTime')?.value || '10:00';
+
     if (!title) return;
+
+    // Build standard ISO string (e.g., "2026-08-02T10:00:00")
+    const selectedDate = dateInput || new Date().toISOString().split('T')[0];
+    const fullDateTimeStr = `${selectedDate}T${timeInput}:00`;
 
     const token = getAuthToken();
     try {
@@ -114,7 +123,7 @@ async function addNewTask() {
             body: JSON.stringify({ 
                 title, 
                 completed: false, 
-                date: new Date().toISOString().split('T')[0]
+                date: fullDateTimeStr 
             })
         });
 
@@ -479,12 +488,16 @@ function initCalendar() {
     if (!calendarEl) return;
 
     calendar = new FullCalendar.Calendar(calendarEl, {
-        initialView: 'dayGridMonth',
+        initialView: 'timeGridWeek',
         headerToolbar: {
             left: 'prev,next today',
             center: 'title',
             right: 'dayGridMonth,timeGridWeek'
         },
+        editable: true,                 // Enables dragging and re-ordering
+        droppable: true,                // Enables dropping external events
+        allDayMaintainDuration: false,  // CRITICAL: Allows dragging events OUT of the All-Day header into hourly slots
+        defaultTimedEventDuration: '01:00:00',
         events: []
     });
     calendar.render();
@@ -494,9 +507,14 @@ function updateCalendarEvents() {
     if (!calendar) return;
     calendar.removeAllEvents();
     tasks.forEach(task => {
+        // Detect whether the task date string includes a specific time (ISO string with 'T')
+        const hasTime = task.date && task.date.includes('T');
+
         calendar.addEvent({
+            id: task._id,
             title: task.title,
-            start: task.date || new Date().toISOString().split('T')[0],
+            start: task.date || new Date().toISOString(),
+            allDay: !hasTime, // Marks false if a time is included, automatically slotting it into specific hours
             color: task.completed ? '#10b981' : '#2563eb'
         });
     });
@@ -780,50 +798,8 @@ function initAuthForms() {
 }
 
 // ==========================================
-// INITIALIZE ON PAGE LOAD
+// POMODORO TIMER LOGIC
 // ==========================================
-document.addEventListener('DOMContentLoaded', () => {
-    const token = getAuthToken();
-    const path = window.location.pathname;
-
-    const isLoginPage = path.includes('login.html');
-    const isRegisterPage = path.includes('register.html');
-    const isForgotPasswordPage = path.includes('forgot-password.html');
-    const isDashboard = path.includes('dashboard.html') || path === '/' || path === '';
-
-    if (isDashboard && !token) {
-        window.location.href = 'login.html';
-        return;
-    }
-
-    if (token && (isLoginPage || isRegisterPage || isForgotPasswordPage)) {
-        window.location.href = 'dashboard.html';
-        return;
-    }
-
-    const fileInput = document.getElementById('noteFileInput');
-    if (fileInput) {
-        fileInput.addEventListener('change', handleFileSelect);
-    }
-
-    if (token) {
-        fetchTasksFromBackend();
-        fetchExamsFromBackend();
-        fetchNotesFromBackend();
-
-        if (typeof loadSavedProfile === 'function') loadSavedProfile();
-        if (typeof initCalendar === 'function') initCalendar();
-        
-        const chartCanvas = document.getElementById('weeklyChart');
-        if (chartCanvas && typeof initCharts === 'function') {
-            initCharts();
-        }
-    }
-
-    if (isLoginPage || isRegisterPage || isForgotPasswordPage) {
-        initAuthForms();
-    }
-});
 let pomoInterval = null;
 let pomoSecondsLeft = 25 * 60;
 let defaultMinutes = 25;
@@ -878,3 +854,49 @@ function resetPomodoro() {
     pomoSecondsLeft = defaultMinutes * 60;
     updateTimerDisplay();
 }
+
+// ==========================================
+// INITIALIZE ON PAGE LOAD
+// ==========================================
+document.addEventListener('DOMContentLoaded', () => {
+    const token = getAuthToken();
+    const path = window.location.pathname;
+
+    const isLoginPage = path.includes('login.html');
+    const isRegisterPage = path.includes('register.html');
+    const isForgotPasswordPage = path.includes('forgot-password.html');
+    const isDashboard = path.includes('dashboard.html') || path === '/' || path === '';
+
+    if (isDashboard && !token) {
+        window.location.href = 'login.html';
+        return;
+    }
+
+    if (token && (isLoginPage || isRegisterPage || isForgotPasswordPage)) {
+        window.location.href = 'dashboard.html';
+        return;
+    }
+
+    const fileInput = document.getElementById('noteFileInput');
+    if (fileInput) {
+        fileInput.addEventListener('change', handleFileSelect);
+    }
+
+    if (token) {
+        fetchTasksFromBackend();
+        fetchExamsFromBackend();
+        fetchNotesFromBackend();
+
+        if (typeof loadSavedProfile === 'function') loadSavedProfile();
+        if (typeof initCalendar === 'function') initCalendar();
+        
+        const chartCanvas = document.getElementById('weeklyChart');
+        if (chartCanvas && typeof initCharts === 'function') {
+            initCharts();
+        }
+    }
+
+    if (isLoginPage || isRegisterPage || isForgotPasswordPage) {
+        initAuthForms();
+    }
+});
