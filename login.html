@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login | Study Planner</title>
 
-    <!-- Make sure your CSS filename matches here (style.css or styless.css) -->
     <link rel="stylesheet" href="styless.css">
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -56,6 +55,37 @@
 </div>
 
 <script src="scripts.js"></script>
+<script>
+    document.getElementById('loginForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+
+        const email = document.getElementById('loginEmail').value.trim();
+        const password = document.getElementById('loginPassword').value.trim();
+
+        try {
+            const response = await fetch('https://study-planner-backend-rklh.onrender.com/api/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, password })
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                localStorage.setItem('token', data.token);
+                localStorage.setItem('userName', data.user.name);
+                localStorage.setItem('userEmail', data.user.email);
+
+                window.location.href = 'index.html';
+            } else {
+                alert(data.error || 'Invalid email or password');
+            }
+        } catch (error) {
+            console.error('Login Error:', error);
+            alert('Unable to connect to server. Please try again.');
+        }
+    });
+</script>
 
 </body>
 </html>
