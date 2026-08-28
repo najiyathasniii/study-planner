@@ -1558,3 +1558,495 @@ body:has(.auth-header) {
         font-size: 10px;
     }
 }
+/* =========================================================
+   AUTH PAGES — LOGIN & REGISTER
+   Clean, modern Study Planner style
+========================================================= */
+
+.auth-container {
+    min-height: 100vh;
+    width: 100%;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    padding: 30px 20px;
+
+    background:
+        radial-gradient(
+            circle at 10% 20%,
+            rgba(37, 99, 235, 0.08),
+            transparent 30%
+        ),
+        radial-gradient(
+            circle at 90% 80%,
+            rgba(37, 99, 235, 0.06),
+            transparent 32%
+        ),
+        #f7f9fc;
+}
+
+
+/* =========================================================
+   AUTH CARD
+========================================================= */
+
+.auth-card {
+    width: 100%;
+    max-width: 420px;
+
+    padding: 38px 32px;
+
+    background: #ffffff;
+
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
+
+    box-shadow:
+        0 10px 25px rgba(15, 23, 42, 0.06),
+        0 4px 10px rgba(15, 23, 42, 0.03);
+}
+
+
+/* =========================================================
+   AUTH LOGO / HEADER
+========================================================= */
+
+.auth-card .logo {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+
+    gap: 6px;
+
+    margin-bottom: 30px;
+
+    color: #173b82;
+}
+
+.auth-card .logo i {
+    width: 42px;
+    height: 42px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    margin-bottom: 5px;
+
+    border: 1px solid #bfdbfe;
+    border-radius: 50%;
+
+    background: #eff6ff;
+
+    color: #2563eb;
+
+    font-size: 19px;
+}
+
+.auth-card .logo h1 {
+    margin: 0;
+
+    color: #173b82;
+
+    font-size: 23px;
+    font-weight: 700;
+
+    letter-spacing: -0.4px;
+}
+
+.auth-card .logo p {
+    margin: 0;
+
+    color: #64748b;
+
+    font-size: 13px;
+    font-weight: 400;
+}
+
+
+/* =========================================================
+   INPUT GROUP
+========================================================= */
+
+.input-group {
+    margin-bottom: 19px;
+}
+
+.input-group label {
+    display: block;
+
+    margin-bottom: 7px;
+
+    color: #334155;
+
+    font-size: 13px;
+    font-weight: 600;
+}
+
+
+/* =========================================================
+   INPUTS
+========================================================= */
+
+.input-group input {
+    width: 100%;
+
+    height: 40px;
+
+    padding: 10px 13px;
+
+    background: #ffffff;
+
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+
+    color: #0f172a;
+
+    font-family: "Poppins", sans-serif;
+    font-size: 13px;
+
+    outline: none;
+
+    transition:
+        border-color 0.2s ease,
+        box-shadow 0.2s ease,
+        background 0.2s ease;
+}
+
+.input-group input::placeholder {
+    color: #94a3b8;
+}
+
+.input-group input:focus {
+    border-color: #2563eb;
+
+    box-shadow:
+        0 0 0 3px rgba(37, 99, 235, 0.12);
+}
+
+
+/* =========================================================
+   LOGIN OPTIONS
+========================================================= */
+
+.options {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    margin-top: 2px;
+    margin-bottom: 19px;
+
+    font-size: 12px;
+}
+
+.options label {
+    display: flex;
+    align-items: center;
+
+    gap: 6px;
+
+    color: #64748b;
+
+    font-size: 12px;
+    font-weight: 400;
+
+    cursor: pointer;
+}
+
+.options input[type="checkbox"] {
+    width: 13px;
+    height: 13px;
+
+    accent-color: #2563eb;
+
+    cursor: pointer;
+}
+
+.options a {
+    color: #2563eb;
+
+    font-size: 12px;
+    font-weight: 500;
+
+    text-decoration: none;
+
+    transition: color 0.2s ease;
+}
+
+.options a:hover {
+    color: #1d4ed8;
+    text-decoration: underline;
+}
+
+
+/* =========================================================
+   LOGIN / SUBMIT BUTTON
+========================================================= */
+
+.auth-card .btn {
+    width: 100%;
+
+    min-height: 40px;
+
+    padding: 10px 15px;
+
+    background: #2563eb;
+
+    border: none;
+    border-radius: 8px;
+
+    color: #ffffff;
+
+    font-family: "Poppins", sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+
+    cursor: pointer;
+
+    box-shadow:
+        0 5px 12px rgba(37, 99, 235, 0.18);
+
+    transition:
+        background 0.2s ease,
+        transform 0.2s ease,
+        box-shadow 0.2s ease;
+}
+
+.auth-card .btn:hover {
+    background: #1d4ed8;
+
+    transform: translateY(-1px);
+
+    box-shadow:
+        0 7px 16px rgba(37, 99, 235, 0.22);
+}
+
+.auth-card .btn:active {
+    transform: translateY(0);
+}
+
+
+/* =========================================================
+   BOTTOM TEXT
+========================================================= */
+
+.bottom-text {
+    margin-top: 20px;
+
+    text-align: center;
+
+    color: #64748b;
+
+    font-size: 12px;
+}
+
+.bottom-text a {
+    color: #2563eb;
+
+    font-weight: 600;
+
+    text-decoration: none;
+}
+
+.bottom-text a:hover {
+    text-decoration: underline;
+}
+
+
+/* =========================================================
+   BACK TO HOME
+========================================================= */
+
+.home-link {
+    margin-top: 15px;
+
+    text-align: center;
+}
+
+.home-link a {
+    color: #64748b;
+
+    font-size: 12px;
+
+    text-decoration: none;
+
+    transition: color 0.2s ease;
+}
+
+.home-link a:hover {
+    color: #2563eb;
+}
+
+
+/* =========================================================
+   REGISTER PAGE SUPPORT
+========================================================= */
+
+.auth-header {
+    text-align: center;
+
+    margin-bottom: 30px;
+}
+
+.auth-header h2 {
+    margin-bottom: 6px;
+
+    color: #0f172a;
+
+    font-size: 23px;
+    font-weight: 700;
+}
+
+.auth-header p {
+    color: #64748b;
+
+    font-size: 13px;
+}
+
+
+/* Register inputs with icons */
+
+.input-wrapper {
+    position: relative;
+
+    display: flex;
+    align-items: center;
+}
+
+.input-wrapper i {
+    position: absolute;
+
+    left: 14px;
+
+    color: #94a3b8;
+
+    font-size: 14px;
+
+    pointer-events: none;
+}
+
+.input-wrapper input {
+    width: 100%;
+
+    height: 40px;
+
+    padding: 10px 13px 10px 40px;
+
+    background: #ffffff;
+
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+
+    color: #0f172a;
+
+    font-family: "Poppins", sans-serif;
+    font-size: 13px;
+
+    outline: none;
+
+    transition:
+        border-color 0.2s ease,
+        box-shadow 0.2s ease;
+}
+
+.input-wrapper input:focus {
+    border-color: #2563eb;
+
+    box-shadow:
+        0 0 0 3px rgba(37, 99, 235, 0.12);
+}
+
+
+/* Register button */
+
+.btn-submit {
+    width: 100%;
+
+    min-height: 40px;
+
+    margin-top: 8px;
+
+    padding: 10px;
+
+    background: #2563eb;
+
+    border: none;
+    border-radius: 8px;
+
+    color: #ffffff;
+
+    font-family: "Poppins", sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+
+    cursor: pointer;
+
+    box-shadow:
+        0 5px 12px rgba(37, 99, 235, 0.18);
+
+    transition:
+        background 0.2s ease,
+        transform 0.2s ease;
+}
+
+.btn-submit:hover {
+    background: #1d4ed8;
+
+    transform: translateY(-1px);
+}
+
+
+/* Register footer */
+
+.auth-footer {
+    margin-top: 20px;
+
+    text-align: center;
+
+    color: #64748b;
+
+    font-size: 12px;
+}
+
+.auth-footer a {
+    color: #2563eb;
+
+    font-weight: 600;
+
+    text-decoration: none;
+}
+
+.auth-footer a:hover {
+    text-decoration: underline;
+}
+
+
+/* =========================================================
+   AUTH MOBILE
+========================================================= */
+
+@media (max-width: 480px) {
+
+    .auth-container {
+        padding: 20px 15px;
+    }
+
+    .auth-card {
+        max-width: 100%;
+
+        padding: 32px 24px;
+
+        border-radius: 14px;
+    }
+
+    .auth-card .logo h1 {
+        font-size: 21px;
+    }
+
+    .auth-header h2 {
+        font-size: 21px;
+    }
+}
