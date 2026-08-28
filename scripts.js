@@ -538,10 +538,41 @@ function initCalendar() {
             }
         },
 
-        // 2. Handles DELETING an existing task when clicked on the calendar
-        eventClick: function(info) {
-            if (confirm(`Do you want to delete the task "${info.event.title}"?`)) {
-                deleteTask(info.event.id);
+        // 2. Handles RENAME or DELETE choice when a task is clicked
+        eventClick: async function(info) {
+            const currentTitle = info.event.title;
+            const action = prompt(
+                `Task: "${currentTitle}"\n\nChoose an action:\n1 - Rename Task\n2 - Delete Task\n\n(Type 1 or 2, then click OK):`
+            );
+
+            // OPTION 1: RENAME TASK
+            if (action === '1') {
+                const newTitle = prompt('Enter new task name:', currentTitle);
+                if (!newTitle || !newTitle.trim() || newTitle.trim() === currentTitle) return;
+
+                const token = getAuthToken();
+                try {
+                    const response = await fetch(`${API_BASE_URL}/api/tasks/${info.event.id}`, {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}`
+                        },
+                        body: JSON.stringify({ title: newTitle.trim() })
+                    });
+
+                    if (response.ok) {
+                        fetchTasksFromBackend();
+                    }
+                } catch (error) {
+                    console.error('Error updating task title:', error);
+                }
+            } 
+            // OPTION 2: DELETE TASK
+            else if (action === '2') {
+                if (confirm(`Are you sure you want to delete "${currentTitle}"?`)) {
+                    deleteTask(info.event.id);
+                }
             }
         },
 
