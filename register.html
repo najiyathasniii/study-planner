@@ -3,14 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
     <link rel="manifest" href="/manifest.json">
-<meta name="theme-color" content="#2563eb">
-    <title>Register | Study Planner</title>
-    <!-- Font Awesome Icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    
+    <meta name="theme-color" content="#2563eb">
+
+    <title>Create Account | Study Planner</title>
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Google Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+          rel="stylesheet">
+
     <style>
         * {
             margin: 0;
@@ -20,38 +26,136 @@
         }
 
         body {
-            background-color: #f8fafc;
+            min-height: 100vh;
+            background:
+                radial-gradient(circle at 10% 20%, rgba(37,99,235,0.10), transparent 30%),
+                radial-gradient(circle at 90% 80%, rgba(59,130,246,0.10), transparent 30%),
+                #f5f8fc;
+
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 24px;
             color: #0f172a;
+        }
+
+        /* Main layout */
+        .register-wrapper {
+            width: 100%;
+            max-width: 950px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            background: #ffffff;
+            border-radius: 24px;
+            overflow: hidden;
+            box-shadow: 0 20px 50px rgba(15, 23, 42, 0.10);
+            border: 1px solid #e5eaf1;
+        }
+
+        /* Left side */
+        .register-info {
+            background: linear-gradient(145deg, #0f3d91, #2563eb);
+            color: white;
+            padding: 55px 45px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .register-info::before {
+            content: "";
+            position: absolute;
+            width: 250px;
+            height: 250px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.07);
+            top: -90px;
+            right: -80px;
+        }
+
+        .register-info::after {
+            content: "";
+            position: absolute;
+            width: 180px;
+            height: 180px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.06);
+            bottom: -70px;
+            left: -60px;
+        }
+
+        .brand {
             display: flex;
             align-items: center;
-            justify-content: center;
-            min-height: 100vh;
-            padding: 20px;
+            gap: 12px;
+            margin-bottom: 45px;
+            position: relative;
+            z-index: 1;
         }
 
-        .auth-container {
-            background: #ffffff;
-            width: 100%;
-            max-width: 420px;
-            padding: 40px 32px;
-            border-radius: 16px;
-            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
-            border: 1px solid #e2e8f0;
+        .brand img {
+            width: 46px;
+            height: 46px;
+            border-radius: 12px;
+            object-fit: cover;
+            background: white;
         }
 
-        .auth-header {
-            text-align: center;
-            margin-bottom: 32px;
-        }
-
-        .auth-header h2 {
-            font-size: 24px;
+        .brand-name {
+            font-size: 20px;
             font-weight: 700;
-            color: #0f172a;
-            margin-bottom: 8px;
         }
 
-        .auth-header p {
+        .register-info h1 {
+            font-size: 38px;
+            line-height: 1.15;
+            margin-bottom: 18px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .register-info > p {
+            font-size: 15px;
+            line-height: 1.7;
+            color: rgba(255,255,255,0.85);
+            max-width: 370px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .quote {
+            margin-top: 40px;
+            padding: 18px 20px;
+            border-left: 3px solid rgba(255,255,255,0.8);
+            background: rgba(255,255,255,0.08);
+            border-radius: 0 10px 10px 0;
+            font-size: 14px;
+            line-height: 1.6;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Right side */
+        .register-form-area {
+            padding: 55px 50px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .form-heading {
+            margin-bottom: 30px;
+        }
+
+        .form-heading h2 {
+            font-size: 27px;
+            margin-bottom: 8px;
+            color: #0f172a;
+        }
+
+        .form-heading p {
             font-size: 14px;
             color: #64748b;
         }
@@ -70,54 +174,65 @@
 
         .input-wrapper {
             position: relative;
-            display: flex;
-            align-items: center;
         }
 
         .input-wrapper i {
             position: absolute;
-            left: 14px;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
             color: #94a3b8;
-            font-size: 15px;
+            font-size: 14px;
         }
 
         .input-wrapper input {
             width: 100%;
-            padding: 12px 14px 12px 42px;
-            border: 1px solid #cbd5e1;
-            border-radius: 8px;
-            font-size: 14px;
+            height: 48px;
+            padding: 0 15px 0 43px;
+            border: 1px solid #d5dce7;
+            border-radius: 10px;
+            background: #ffffff;
             color: #0f172a;
+            font-size: 14px;
             outline: none;
-            transition: border-color 0.2s, box-shadow 0.2s;
+            transition: 0.2s ease;
+        }
+
+        .input-wrapper input::placeholder {
+            color: #a0aec0;
         }
 
         .input-wrapper input:focus {
             border-color: #2563eb;
-            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+            box-shadow: 0 0 0 4px rgba(37,99,235,0.10);
         }
 
         .btn-submit {
             width: 100%;
-            padding: 12px;
-            background-color: #2563eb;
-            color: #ffffff;
+            height: 50px;
+            margin-top: 5px;
             border: none;
-            border-radius: 8px;
+            border-radius: 10px;
+            background: linear-gradient(135deg, #2563eb, #1677f2);
+            color: white;
             font-size: 15px;
             font-weight: 600;
             cursor: pointer;
-            transition: background-color 0.2s;
-            margin-top: 10px;
+            transition: 0.2s ease;
         }
 
         .btn-submit:hover {
-            background-color: #1d4ed8;
+            transform: translateY(-1px);
+            box-shadow: 0 8px 18px rgba(37,99,235,0.22);
+        }
+
+        .btn-submit:active {
+            transform: translateY(0);
         }
 
         .auth-footer {
             text-align: center;
-            margin-top: 24px;
+            margin-top: 25px;
             font-size: 14px;
             color: #64748b;
         }
@@ -131,59 +246,189 @@
         .auth-footer a:hover {
             text-decoration: underline;
         }
+
+        .home-link {
+            text-align: center;
+            margin-top: 18px;
+        }
+
+        .home-link a {
+            color: #94a3b8;
+            text-decoration: none;
+            font-size: 13px;
+        }
+
+        .home-link a:hover {
+            color: #2563eb;
+        }
+
+        /* Mobile */
+        @media (max-width: 768px) {
+
+            body {
+                padding: 15px;
+            }
+
+            .register-wrapper {
+                grid-template-columns: 1fr;
+                max-width: 450px;
+            }
+
+            .register-info {
+                padding: 30px 28px;
+                min-height: 280px;
+            }
+
+            .brand {
+                margin-bottom: 25px;
+            }
+
+            .register-info h1 {
+                font-size: 28px;
+            }
+
+            .register-info > p {
+                font-size: 14px;
+            }
+
+            .quote {
+                margin-top: 22px;
+            }
+
+            .register-form-area {
+                padding: 35px 28px;
+            }
+
+            .form-heading h2 {
+                font-size: 24px;
+            }
+        }
     </style>
 </head>
+
 <body>
 
-    <div class="auth-container">
-        <div class="auth-header">
-            <h2>Create an Account 🚀</h2>
-            <p>Start organizing your studies today</p>
-        </div>
+    <div class="register-wrapper">
 
-        <form id="registerForm">
-            <div class="form-group">
-                <label for="registerName">Full Name</label>
-                <div class="input-wrapper">
-                    <i class="fa-solid fa-user"></i>
-                    <input type="text" id="registerName" placeholder="John Doe" required>
-                </div>
+        <!-- ================= LEFT SIDE ================= -->
+        <section class="register-info">
+
+            <div class="brand">
+                <img src="/icon-192.png" alt="Study Planner">
+                <span class="brand-name">Study Planner</span>
             </div>
 
-            <div class="form-group">
-                <label for="registerEmail">Email Address</label>
-                <div class="input-wrapper">
-                    <i class="fa-solid fa-envelope"></i>
-                    <input type="email" id="registerEmail" placeholder="student@example.com" required>
-                </div>
+            <h1>
+                Plan your studies.<br>
+                Make progress every day.
+            </h1>
+
+            <p>
+                Keep your tasks, exams, assignments and study notes
+                organized in one simple place.
+            </p>
+
+            <div class="quote">
+                “You don't have to finish everything today.
+                Just know what to do next.”
             </div>
 
-            <div class="form-group">
-                <label for="registerPassword">Password</label>
-                <div class="input-wrapper">
-                    <i class="fa-solid fa-lock"></i>
-                    <input type="password" id="registerPassword" placeholder="••••••••" required>
-                </div>
+        </section>
+
+
+        <!-- ================= RIGHT SIDE ================= -->
+        <section class="register-form-area">
+
+            <div class="form-heading">
+                <h2>Create your account</h2>
+                <p>Start building a better study routine today.</p>
             </div>
 
-            <button type="submit" class="btn-submit">Sign Up</button>
-        </form>
+            <form id="registerForm">
 
-        <div class="auth-footer">
-            Already have an account? <a href="login.html">Log In</a>
-        </div>
+                <div class="form-group">
+                    <label for="registerName">Full Name</label>
+
+                    <div class="input-wrapper">
+                        <i class="fa-solid fa-user"></i>
+
+                        <input
+                            type="text"
+                            id="registerName"
+                            placeholder="Enter your full name"
+                            required>
+                    </div>
+                </div>
+
+
+                <div class="form-group">
+                    <label for="registerEmail">Email Address</label>
+
+                    <div class="input-wrapper">
+                        <i class="fa-solid fa-envelope"></i>
+
+                        <input
+                            type="email"
+                            id="registerEmail"
+                            placeholder="Enter your email"
+                            required>
+                    </div>
+                </div>
+
+
+                <div class="form-group">
+                    <label for="registerPassword">Password</label>
+
+                    <div class="input-wrapper">
+                        <i class="fa-solid fa-lock"></i>
+
+                        <input
+                            type="password"
+                            id="registerPassword"
+                            placeholder="Create a password"
+                            required>
+                    </div>
+                </div>
+
+
+                <button type="submit" class="btn-submit">
+                    Create Account
+                </button>
+
+            </form>
+
+
+            <div class="auth-footer">
+                Already have an account?
+                <a href="login.html">Log in</a>
+            </div>
+
+            <div class="home-link">
+                <a href="index.html">
+                    ← Back to Study Planner
+                </a>
+            </div>
+
+        </section>
+
     </div>
 
-    <!-- Global App JavaScript -->
+
+    <!-- Your existing JavaScript -->
     <script src="scripts.js"></script>
+
+    <!-- PWA Service Worker -->
     <script>
-if ("serviceWorker" in navigator) {
-    window.addEventListener("load", () => {
-        navigator.serviceWorker.register("/sw.js")
-            .then(() => console.log("Study Planner app ready"))
-            .catch(error => console.error("Service Worker error:", error));
-    });
-}
-</script>
+        if ("serviceWorker" in navigator) {
+            window.addEventListener("load", () => {
+                navigator.serviceWorker.register("/sw.js")
+                    .then(() => console.log("Study Planner app ready"))
+                    .catch(error =>
+                        console.error("Service Worker error:", error)
+                    );
+            });
+        }
+    </script>
+
 </body>
 </html>
