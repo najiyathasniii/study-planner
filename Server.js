@@ -22,9 +22,11 @@ app.use(express.urlencoded({ limit: '20mb', extended: true }));
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your_super_secret_jwt_key_here';
 
-// Configure Nodemailer Transporter
+// Configure Nodemailer Transporter (Fixed Timeout issue with SSL Port 465)
 const transporter = nodemailer.createTransport({
-    service: 'gmail',
+    host: 'smtp.gmail.com',
+    port: 465,
+    secure: true, // Use SSL
     auth: {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASS
