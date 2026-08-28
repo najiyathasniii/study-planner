@@ -4,7 +4,6 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
-const nodemailer = require('nodemailer');
 
 const app = express();
 
@@ -21,17 +20,6 @@ app.use(express.json({ limit: '20mb' }));
 app.use(express.urlencoded({ limit: '20mb', extended: true }));
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your_super_secret_jwt_key_here';
-
-// Configure Nodemailer Transporter (Fixed Timeout issue with SSL Port 465)
-const transporter = nodemailer.createTransport({
-    host: 'smtp.gmail.com',
-    port: 465,
-    secure: true, // Use SSL
-    auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS
-    }
-});
 
 // ==========================================
 // 2. MONGOOSE SCHEMAS & MODELS
@@ -145,7 +133,7 @@ app.post('/api/login', async (req, res) => {
     }
 });
 
-// FORGOT PASSWORD ROUTE (POWERED BY NODEMAILER)
+// FORGOT PASSWORD ROUTE (POWERED BY RESEND API)
 app.post('/api/forgot-password', async (req, res) => {
     try {
         const { email } = req.body;
@@ -161,20 +149,34 @@ app.post('/api/forgot-password', async (req, res) => {
         const resetToken = jwt.sign({ id: user._id }, JWT_SECRET, { expiresIn: '15m' });
         const resetLink = `https://study-planner-six-beige.vercel.app/reset-password.html?token=${resetToken}`;
 
-        await transporter.sendMail({
-            from: `"Study Planner" <${process.env.EMAIL_USER}>`,
-            to: email,
-            subject: 'Study Planner - Password Reset Request',
-            html: `
-                <div style="font-family: Arial, sans-serif; padding: 20px;">
-                    <h2>Password Reset Request</h2>
-                    <p>Click the button below to reset your password. This link is valid for 15 minutes:</p>
-                    <a href="${resetLink}" style="display: inline-block; padding: 10px 20px; background-color: #2563eb; color: #ffffff; text-decoration: none; border-radius: 5px;">Reset Password</a>
-                </div>
-            `
+        // Send email via HTTP API using fetch (Bypasses SMTP port blocking on Render)
+        const response = await fetch('https://api.resend.com/emails', {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${process.env.RESEND_API_KEY}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                from: 'Study Planner <onboarding@resend.dev>',
+                to: email,
+                subject: 'Study Planner - Password Reset Request',
+                html: `
+                    <div style="font-family: Arial, sans-serif; padding: 20px;">
+                        <h2>Password Reset Request</h2>
+                        <p>Click the button below to reset your password. This link is valid for 15 minutes:</p>
+                        <a href="${resetLink}" style="display: inline-block; padding: 10px 20px; background-color: #2563eb; color: #ffffff; text-decoration: none; border-radius: 5px;">Reset Password</a>
+                    </div>
+                `
+            })
         });
 
-        res.status(200).json({ message: 'Password reset link sent to your email.' });
+        if (response.ok) {
+            res.status(200).json({ message: 'Password reset link sent to your email.' });
+        } else {
+            const errorData = await response.json();
+            console.error('Resend API Error:', errorData);
+            res.status(500).json({ error: 'Failed to send reset email' });
+        }
 
     } catch (err) {
         console.error('Forgot password error:', err);
