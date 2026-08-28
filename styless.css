@@ -1926,3 +1926,56 @@ input:focus-visible {
         animation-iteration-count: 1 !important;
     }
 }
+
+/* =========================================================
+   MOBILE FORCE FIX
+========================================================= */
+
+@media screen and (max-width: 650px) {
+
+    html,
+    body {
+        width: 100%;
+        max-width: 100%;
+        overflow-x: hidden;
+    }
+
+    .container {
+        width: 100%;
+        max-width: 100%;
+        padding-left: 14px;
+        padding-right: 14px;
+    }
+
+    .hero-inner {
+        grid-template-columns: 1fr !important;
+    }
+
+    .feature-grid {
+        grid-template-columns: 1fr !important;
+    }
+
+    .steps {
+        grid-template-columns: 1fr !important;
+    }
+
+    .primary-nav {
+        display: none !important;
+    }
+
+    .site-header {
+        width: 100%;
+    }
+
+    .hero h1 {
+        font-size: 38px;
+    }
+
+    .planner-preview {
+        width: 100%;
+    }
+
+    .footer-inner {
+        grid-template-columns: 1fr 1fr !important;
+    }
+}
