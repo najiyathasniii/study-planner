@@ -1979,3 +1979,8 @@ input:focus-visible {
         grid-template-columns: 1fr 1fr !important;
     }
 }
+@media screen and (max-width: 650px) {
+    body {
+        background: red !important;
+    }
+}
