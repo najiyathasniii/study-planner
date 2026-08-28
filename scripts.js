@@ -539,40 +539,30 @@ function initCalendar() {
         },
 
         // 2. Handles RENAME or DELETE choice when a task is clicked
+// Handles RENAMING a task when clicked on the calendar
         eventClick: async function(info) {
             const currentTitle = info.event.title;
-            const action = prompt(
-                `Task: "${currentTitle}"\n\nChoose an action:\n1 - Rename Task\n2 - Delete Task\n\n(Type 1 or 2, then click OK):`
-            );
+            const newTitle = prompt('Rename task:', currentTitle);
 
-            // OPTION 1: RENAME TASK
-            if (action === '1') {
-                const newTitle = prompt('Enter new task name:', currentTitle);
-                if (!newTitle || !newTitle.trim() || newTitle.trim() === currentTitle) return;
+            // If user enters nothing, cancels, or keeps the same name, do nothing
+            if (!newTitle || !newTitle.trim() || newTitle.trim() === currentTitle) return;
 
-                const token = getAuthToken();
-                try {
-                    const response = await fetch(`${API_BASE_URL}/api/tasks/${info.event.id}`, {
-                        method: 'PUT',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Authorization': `Bearer ${token}`
-                        },
-                        body: JSON.stringify({ title: newTitle.trim() })
-                    });
+            const token = getAuthToken();
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/tasks/${info.event.id}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ title: newTitle.trim() })
+                });
 
-                    if (response.ok) {
-                        fetchTasksFromBackend();
-                    }
-                } catch (error) {
-                    console.error('Error updating task title:', error);
+                if (response.ok) {
+                    fetchTasksFromBackend();
                 }
-            } 
-            // OPTION 2: DELETE TASK
-            else if (action === '2') {
-                if (confirm(`Are you sure you want to delete "${currentTitle}"?`)) {
-                    deleteTask(info.event.id);
-                }
+            } catch (error) {
+                console.error('Error renaming task:', error);
             }
         },
 
