@@ -4,12 +4,9 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
-const { Resend } = require('resend');
+const nodemailer = require('nodemailer');
 
 const app = express();
-
-// Initialize Resend with your environment variable
-const resend = new Resend(process.env.RESEND_API_KEY);
 
 // ==========================================
 // 1. MIDDLEWARE CONFIGURATION
@@ -24,6 +21,15 @@ app.use(express.json({ limit: '20mb' }));
 app.use(express.urlencoded({ limit: '20mb', extended: true }));
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your_super_secret_jwt_key_here';
+
+// Configure Nodemailer Transporter
+const transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS
+    }
+});
 
 // ==========================================
 // 2. MONGOOSE SCHEMAS & MODELS
@@ -137,7 +143,7 @@ app.post('/api/login', async (req, res) => {
     }
 });
 
-// FORGOT PASSWORD ROUTE (POWERED BY RESEND)
+// FORGOT PASSWORD ROUTE (POWERED BY NODEMAILER)
 app.post('/api/forgot-password', async (req, res) => {
     try {
         const { email } = req.body;
@@ -153,8 +159,8 @@ app.post('/api/forgot-password', async (req, res) => {
         const resetToken = jwt.sign({ id: user._id }, JWT_SECRET, { expiresIn: '15m' });
         const resetLink = `https://study-planner-six-beige.vercel.app/reset-password.html?token=${resetToken}`;
 
-        await resend.emails.send({
-            from: 'onboarding@resend.dev',
+        await transporter.sendMail({
+            from: `"Study Planner" <${process.env.EMAIL_USER}>`,
             to: email,
             subject: 'Study Planner - Password Reset Request',
             html: `
