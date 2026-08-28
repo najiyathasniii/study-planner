@@ -4,8 +4,12 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
+const { Resend } = require('resend');
 
 const app = express();
+
+// Initialize Resend with your environment variable
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 // ==========================================
 // 1. MIDDLEWARE CONFIGURATION
@@ -16,7 +20,6 @@ app.use(cors({
     allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
-// Payload limit set to 20MB for Base64 image and PDF support
 app.use(express.json({ limit: '20mb' }));
 app.use(express.urlencoded({ limit: '20mb', extended: true }));
 
@@ -26,17 +29,15 @@ const JWT_SECRET = process.env.JWT_SECRET || 'your_super_secret_jwt_key_here';
 // 2. MONGOOSE SCHEMAS & MODELS
 // ==========================================
 
-// User Schema (ADDED: avatar field)
 const UserSchema = new mongoose.Schema({
     name: { type: String, required: true },
     email: { type: String, required: true, unique: true },
     password: { type: String, required: true },
-    avatar: { type: String, default: '' } // Stores Base64 image
+    avatar: { type: String, default: '' }
 }, { timestamps: true });
 
 const User = mongoose.model('User', UserSchema);
 
-// Task Schema
 const TaskSchema = new mongoose.Schema({
     userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
     title: { type: String, required: true },
@@ -46,7 +47,6 @@ const TaskSchema = new mongoose.Schema({
 
 const Task = mongoose.model('Task', TaskSchema);
 
-// Exam / Assignment Schema
 const ExamSchema = new mongoose.Schema({
     userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
     title: { type: String, required: true },
@@ -56,7 +56,6 @@ const ExamSchema = new mongoose.Schema({
 
 const Exam = mongoose.model('Exam', ExamSchema);
 
-// PDF / Note Schema
 const NoteSchema = new mongoose.Schema({
     userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
     title: { type: String, required: true },
@@ -138,7 +137,7 @@ app.post('/api/login', async (req, res) => {
     }
 });
 
-// Forgot Password
+// FORGOT PASSWORD ROUTE (POWERED BY RESEND)
 app.post('/api/forgot-password', async (req, res) => {
     try {
         const { email } = req.body;
@@ -148,12 +147,30 @@ app.post('/api/forgot-password', async (req, res) => {
 
         const user = await User.findOne({ email });
         if (!user) {
-            return res.status(200).json({ message: 'If an account exists with that email, password reset instructions have been processed.' });
+            return res.status(200).json({ message: 'If an account exists, reset instructions have been processed.' });
         }
 
-        res.status(200).json({ message: 'Password reset request received successfully.' });
+        const resetToken = jwt.sign({ id: user._id }, JWT_SECRET, { expiresIn: '15m' });
+        const resetLink = `https://study-planner-six-beige.vercel.app/reset-password.html?token=${resetToken}`;
+
+        await resend.emails.send({
+            from: 'onboarding@resend.dev',
+            to: email,
+            subject: 'Study Planner - Password Reset Request',
+            html: `
+                <div style="font-family: Arial, sans-serif; padding: 20px;">
+                    <h2>Password Reset Request</h2>
+                    <p>Click the button below to reset your password. This link is valid for 15 minutes:</p>
+                    <a href="${resetLink}" style="display: inline-block; padding: 10px 20px; background-color: #2563eb; color: #ffffff; text-decoration: none; border-radius: 5px;">Reset Password</a>
+                </div>
+            `
+        });
+
+        res.status(200).json({ message: 'Password reset link sent to your email.' });
+
     } catch (err) {
-        res.status(500).json({ error: 'Failed to process forgot password request' });
+        console.error('Forgot password error:', err);
+        res.status(500).json({ error: 'Failed to send reset email' });
     }
 });
 
@@ -187,7 +204,7 @@ app.post('/api/change-password', authenticateToken, async (req, res) => {
     }
 });
 
-// GET USER PROFILE (ADDED: Returns stored avatar to sync devices)
+// GET USER PROFILE
 app.get('/api/user/profile', authenticateToken, async (req, res) => {
     try {
         const user = await User.findById(req.user.id);
@@ -200,7 +217,7 @@ app.get('/api/user/profile', authenticateToken, async (req, res) => {
     }
 });
 
-// UPDATE USER PROFILE & AVATAR (UPDATED: Handles avatar saving)
+// UPDATE USER PROFILE & AVATAR
 app.put('/api/user/profile', authenticateToken, async (req, res) => {
     try {
         const { name, avatar } = req.body;
@@ -233,7 +250,6 @@ app.put('/api/user/profile', authenticateToken, async (req, res) => {
 // 5. TASKS API ROUTES
 // ==========================================
 
-// Get Tasks
 app.get('/api/tasks', authenticateToken, async (req, res) => {
     try {
         const tasks = await Task.find({ userId: req.user.id }).sort({ createdAt: -1 });
@@ -243,7 +259,6 @@ app.get('/api/tasks', authenticateToken, async (req, res) => {
     }
 });
 
-// Add Task
 app.post('/api/tasks', authenticateToken, async (req, res) => {
     try {
         const { title, completed, date } = req.body;
@@ -260,7 +275,6 @@ app.post('/api/tasks', authenticateToken, async (req, res) => {
     }
 });
 
-// Update Task (FIXED: Now properly updates the date field)
 app.put('/api/tasks/:id', authenticateToken, async (req, res) => {
     try {
         const { completed, title, date } = req.body; 
@@ -280,7 +294,6 @@ app.put('/api/tasks/:id', authenticateToken, async (req, res) => {
     }
 });
 
-// Delete Task
 app.delete('/api/tasks/:id', authenticateToken, async (req, res) => {
     try {
         await Task.findOneAndDelete({ _id: req.params.id, userId: req.user.id });
@@ -294,7 +307,6 @@ app.delete('/api/tasks/:id', authenticateToken, async (req, res) => {
 // 6. EXAMS & ASSIGNMENTS API ROUTES
 // ==========================================
 
-// Get Exams
 app.get('/api/exams', authenticateToken, async (req, res) => {
     try {
         const exams = await Exam.find({ userId: req.user.id }).sort({ dueDate: 1 });
@@ -304,7 +316,6 @@ app.get('/api/exams', authenticateToken, async (req, res) => {
     }
 });
 
-// Add Exam
 app.post('/api/exams', authenticateToken, async (req, res) => {
     try {
         const { title, subject, dueDate } = req.body;
@@ -321,7 +332,6 @@ app.post('/api/exams', authenticateToken, async (req, res) => {
     }
 });
 
-// Delete Exam
 app.delete('/api/exams/:id', authenticateToken, async (req, res) => {
     try {
         await Exam.findOneAndDelete({ _id: req.params.id, userId: req.user.id });
@@ -335,7 +345,6 @@ app.delete('/api/exams/:id', authenticateToken, async (req, res) => {
 // 7. PDF & NOTES HUB API ROUTES
 // ==========================================
 
-// Get Notes
 app.get('/api/notes', authenticateToken, async (req, res) => {
     try {
         const notes = await Note.find({ userId: req.user.id }).sort({ createdAt: -1 });
@@ -345,7 +354,6 @@ app.get('/api/notes', authenticateToken, async (req, res) => {
     }
 });
 
-// Save Note / PDF
 app.post('/api/notes', authenticateToken, async (req, res) => {
     try {
         const { title, subject, fileName, fileType, fileData, date } = req.body;
@@ -365,7 +373,6 @@ app.post('/api/notes', authenticateToken, async (req, res) => {
     }
 });
 
-// Delete Note
 app.delete('/api/notes/:id', authenticateToken, async (req, res) => {
     try {
         await Note.findOneAndDelete({ _id: req.params.id, userId: req.user.id });
