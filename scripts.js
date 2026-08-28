@@ -538,11 +538,17 @@ function initCalendar() {
             }
         },
 
-        // 2. NEW: Handles saving the time when you DRAG an existing task
+        // 2. Handles DELETING an existing task when clicked on the calendar
+        eventClick: function(info) {
+            if (confirm(`Do you want to delete the task "${info.event.title}"?`)) {
+                deleteTask(info.event.id);
+            }
+        },
+
+        // 3. Handles saving the time when you DRAG an existing task
         eventDrop: async function(info) {
             const token = getAuthToken();
             try {
-                // info.event.startStr gets the exact new date and time you dropped it on
                 const payload = { 
                     date: info.event.startStr 
                 };
@@ -557,7 +563,6 @@ function initCalendar() {
                 });
 
                 if (!response.ok) {
-                    // If the database fails to save, snap the task back to its original spot
                     info.revert();
                     console.error('Backend failed to save the new time.');
                 }
